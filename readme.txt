@@ -4,7 +4,7 @@ aqui iran notas de desarrollo compartidas jsjsj
 
 # M: Notas de Miguel
 # E: Notas de Erick 
-# V: Notas de Valentin
+# V: Notas de Valentin.
 
 
 #M 
