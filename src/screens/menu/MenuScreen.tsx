@@ -89,9 +89,6 @@ export default function MenuScreen() {
                   onPress={() => handleTabChange(tab.id, index)}
                   disabled={tab.id === 'pomodoros'}
                 >
-                  <Text style={[styles.tabIcon, isActive && styles.tabIconActive]}>
-                    {tab.icon}
-                  </Text>
                   <Text
                     style={[
                       styles.tabLabel,
@@ -172,7 +169,7 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     alignItems: 'center',
-    paddingVertical: 25,
+    paddingVertical: 40,
     paddingHorizontal: 30,
     borderRadius: 20,
     backgroundColor: '#fff',
@@ -194,22 +191,15 @@ const styles = StyleSheet.create({
   tabComingSoon: {
     opacity: 0.5,
   },
-  tabIcon: {
-    fontSize: 40,
-    marginBottom: 10,
-  },
-  tabIconActive: {
-    fontSize: 50,
-  },
   tabLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#666',
     textAlign: 'center',
   },
   tabLabelActive: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
   },
   tabLabelComingSoon: {
     color: '#999',

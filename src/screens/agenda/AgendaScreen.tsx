@@ -28,13 +28,13 @@ const mockAgenda: AgendaItem[] = [
 ];
 
 export default function AgendaScreen() {
+  const router = useRouter();
   const [agenda, setAgenda] = useState<AgendaItem[]>(mockAgenda);
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
-  const router = useRouter();
 
   const handleAddItem = () => {
     if (!newTitle.trim() || !newDate.trim()) {
@@ -212,15 +212,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: '#007AFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    flex: 1,
-    textAlign: 'center',
   },
   addButton: {
     backgroundColor: '#007AFF',

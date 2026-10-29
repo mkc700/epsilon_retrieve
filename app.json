@@ -5,12 +5,19 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "scheme": "epsilon-retrieve",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.epsilonretrieve.app"
     },
-    "android": {}
+    "android": {
+      "package": "com.epsilonretrieve.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
   }
 }
