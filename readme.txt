@@ -11,3 +11,4 @@ aqui iran notas de desarrollo compartidas jsjsj
     inicializare el repositorio con el arbol de directorios
 
 
+. ahora si
