@@ -3,6 +3,7 @@
     "name": "Epsilon Retrieve",
     "slug": "epsilon-retrieve",
     "version": "1.0.0",
+    "sdkVersion": "58.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "epsilon-retrieve",

@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
 
 function RootNavigator() {
   const { isAuthenticated, loading } = useAuth();
@@ -16,6 +17,14 @@ function RootNavigator() {
       }
     }
   }, [isAuthenticated, loading]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

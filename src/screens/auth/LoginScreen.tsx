@@ -1,81 +1,165 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
+import { CustomModal } from '../../components/CustomModal';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading } = useAuth();
   const router = useRouter();
+  
+  const modalRef = useRef<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info'
+  });
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const authErrorRef = useRef('');
+  const [showAuthError, setShowAuthError] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
+
+  console.log('Render - authError:', authErrorRef.current, 'showAuthError:', showAuthError);
+
+  useEffect(() => {
+    console.log('useEffect - showAuthError:', showAuthError, 'authErrorRef.current:', authErrorRef.current);
+  }, [showAuthError, forceUpdate]);
+
+  const showModal = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    modalRef.current = {
+      visible: true,
+      title,
+      message,
+      type
+    };
+    setModalVisible(true);
+  };
 
   const handleLogin = async () => {
+    authErrorRef.current = '';
+    setShowAuthError(false);
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+      showModal('Error', 'Por favor completa todos los campos', 'error');
       return;
     }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showModal('Error', 'Por favor ingresa un correo electrónico válido', 'error');
+      return;
+    }
+    
+    // Prueba: mostrar texto de error siempre
+    authErrorRef.current = 'Usuario no encontrado';
+    setTimeout(() => {
+      setShowAuthError(true);
+      setForceUpdate(prev => prev + 1);
+    }, 100);
+    
     try {
       await login(email, password);
-      router.replace('/menu');
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo iniciar sesión');
+      showModal('¡Bienvenido de nuevo!', 'Has iniciado sesión exitosamente', 'success');
+      setTimeout(() => {
+        router.replace('/menu');
+      }, 1500);
+    } catch (error: any) {
+      let errorMessage = error.message || 'No se pudo iniciar sesión';
+      console.log('Error message in LoginScreen:', errorMessage);
+      
+      if (errorMessage.includes('User not found') || errorMessage.includes('usuario no encontrado') || errorMessage.includes('no existe')) {
+        errorMessage = 'El usuario no existe. Por favor verifica tu correo electrónico.';
+      } else if (errorMessage.includes('Invalid credentials') || errorMessage.includes('credenciales') || errorMessage.includes('contraseña incorrecta')) {
+        authErrorRef.current = errorMessage;
+        setShowAuthError(true);
+        setForceUpdate(prev => prev + 1);
+        console.log('Setting authError:', errorMessage);
+        return;
+      } else if (errorMessage.includes('Sin conexión')) {
+        errorMessage = 'Sin conexión al servidor. Verifica tu conexión a internet.';
+      }
+      
+      showModal('Error', errorMessage, 'error');
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Epsilon Retrieve</Text>
-          <Text style={styles.subtitle}>Inicia sesión</Text>
+    <>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <Text style={styles.title}>Epsilon Retrieve</Text>
+            <Text style={styles.subtitle}>Inicia sesión</Text>
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Correo electrónico"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Correo electrónico"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? 'Cargando...' : 'Iniciar Sesión'}
+              </Text>
+            </TouchableOpacity>
+
+            {showAuthError ? (
+              <Text style={styles.errorText}>{authErrorRef.current}</Text>
+            ) : null}
+
+            <TouchableOpacity onPress={() => router.push('/signup')}>
+              <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
+            </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? 'Cargando...' : 'Iniciar Sesión'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push('/signup')}>
-            <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      
+      <CustomModal
+        visible={modalVisible}
+        title={modalRef.current.title}
+        message={modalRef.current.message}
+        type={modalRef.current.type}
+        onClose={() => {
+          setModalVisible(false);
+          modalRef.current = { visible: false, title: '', message: '', type: 'info' };
+        }}
+      />
+    </>
   );
 }
 
@@ -134,5 +218,11 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     textAlign: 'center',
     fontSize: 14,
+  },
+  errorText: {
+    color: '#f44336',
+    textAlign: 'center',
+    fontSize: 14,
+    marginTop: 10,
   },
 });

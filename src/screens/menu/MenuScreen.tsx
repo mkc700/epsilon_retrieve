@@ -52,55 +52,36 @@ export default function MenuScreen() {
       <View style={styles.content}>
         <Text style={styles.welcomeText}>Selecciona una sección</Text>
 
-        <View style={styles.carouselContainer}>
-          {tabs.map((tab, index) => {
+        <View style={styles.tabsContainer}>
+          {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
-            const inputRange = tabs.map((_, i) => i);
-            const scale = animatedValue.interpolate({
-              inputRange,
-              outputRange: inputRange.map((i) => (i === index ? 1.2 : 0.8)),
-            });
-            const opacity = animatedValue.interpolate({
-              inputRange,
-              outputRange: inputRange.map((i) => (i === index ? 1 : 0.4)),
-            });
-            const translateX = animatedValue.interpolate({
-              inputRange,
-              outputRange: inputRange.map((i) => (i - index) * 60),
-            });
-
             return (
-              <Animated.View
+              <TouchableOpacity
                 key={tab.id}
                 style={[
-                  styles.tabItem,
-                  {
-                    transform: [{ scale }, { translateX }],
-                    opacity,
-                  },
+                  styles.tabButton,
+                  isActive && styles.tabButtonActive,
+                  tab.id === 'pomodoros' && styles.tabComingSoon,
                 ]}
+                onPress={() => {
+                  if (tab.id !== 'pomodoros') {
+                    const index = tabs.findIndex(t => t.id === tab.id);
+                    handleTabChange(tab.id, index);
+                  }
+                }}
+                disabled={tab.id === 'pomodoros'}
               >
-                <TouchableOpacity
+                <Text
                   style={[
-                    styles.tabButton,
-                    isActive && styles.tabButtonActive,
-                    tab.id === 'pomodoros' && styles.tabComingSoon,
+                    styles.tabLabel,
+                    isActive && styles.tabLabelActive,
+                    tab.id === 'pomodoros' && styles.tabLabelComingSoon,
                   ]}
-                  onPress={() => handleTabChange(tab.id, index)}
-                  disabled={tab.id === 'pomodoros'}
                 >
-                  <Text
-                    style={[
-                      styles.tabLabel,
-                      isActive && styles.tabLabelActive,
-                      tab.id === 'pomodoros' && styles.tabLabelComingSoon,
-                    ]}
-                  >
-                    {tab.label}
-                    {tab.id === 'pomodoros' && '\n(Próximamente)'}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
+                  {tab.label}
+                  {tab.id === 'pomodoros' && ' (Próximamente)'}
+                </Text>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -152,33 +133,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
+    paddingHorizontal: 20,
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 50,
+    marginBottom: 30,
   },
-  carouselContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabItem: {
-    marginHorizontal: 10,
+  tabsContainer: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
   tabButton: {
     alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 30,
-    borderRadius: 20,
+    justifyContent: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 25,
+    borderRadius: 15,
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    minWidth: 100,
+    marginBottom: 15,
   },
   tabButtonActive: {
     backgroundColor: '#007AFF',
@@ -192,20 +171,20 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   tabLabel: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#666',
     textAlign: 'center',
   },
   tabLabelActive: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
   },
   tabLabelComingSoon: {
     color: '#999',
   },
   enterButton: {
-    marginTop: 40,
+    marginTop: 30,
     backgroundColor: '#007AFF',
     paddingVertical: 15,
     paddingHorizontal: 40,
