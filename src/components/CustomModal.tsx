@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Animated,
 } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 interface CustomModalProps {
   visible: boolean;
@@ -23,6 +24,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   type = 'info',
   onClose,
 }) => {
+  const { colors } = useTheme();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.9));
 
@@ -60,12 +62,12 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return '#4CAF50';
+        return colors.success;
       case 'error':
-        return '#f44336';
+        return colors.error;
       case 'info':
       default:
-        return '#2196F3';
+        return colors.primary;
     }
   };
 
@@ -95,6 +97,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
             {
               opacity: fadeAnim,
               transform: [{ scale: scaleAnim }],
+              backgroundColor: colors.surface,
             },
           ]}
         >
@@ -103,9 +106,9 @@ export const CustomModal: React.FC<CustomModalProps> = ({
             <Text style={styles.title}>{title}</Text>
           </View>
           <View style={styles.body}>
-            <Text style={styles.message}>{message}</Text>
+            <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
           </View>
-          <TouchableOpacity style={styles.button} onPress={onClose}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={onClose}>
             <Text style={styles.buttonText}>OK</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -123,7 +126,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContainer: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     width: '100%',
     maxWidth: 400,
@@ -147,26 +149,25 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#fff',
     flex: 1,
+    letterSpacing: -0.5,
   },
   body: {
     padding: 20,
   },
   message: {
     fontSize: 16,
-    color: '#333',
     lineHeight: 24,
   },
   button: {
-    backgroundColor: '#007AFF',
     padding: 16,
     alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

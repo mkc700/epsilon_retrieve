@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useRouter } from 'expo-router';
 import { CustomModal } from '../../components/CustomModal';
 
@@ -17,6 +18,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading } = useAuth();
+  const { colors } = useTheme();
   const router = useRouter();
   
   const modalRef = useRef<{
@@ -102,36 +104,46 @@ export default function LoginScreen() {
   return (
     <>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
-            <Text style={styles.title}>Epsilon Retrieve</Text>
-            <Text style={styles.subtitle}>Inicia sesión</Text>
+            <Text style={[styles.title, { color: colors.primary }]}>Epsilon Retrieve</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Inicia sesión</Text>
 
             <View style={styles.inputContainer}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
                 placeholder="Correo electrónico"
+                placeholderTextColor={colors.textTertiary}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                accessible={true}
+                accessibilityLabel="Correo electrónico"
               />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
                 placeholder="Contraseña"
+                placeholderTextColor={colors.textTertiary}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                accessible={true}
+                accessibilityLabel="Contraseña"
               />
             </View>
 
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[styles.button, { backgroundColor: colors.primary }, loading && { backgroundColor: colors.disabled }]}
               onPress={handleLogin}
               disabled={loading}
+              accessible={true}
+              accessibilityLabel="Iniciar sesión"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: loading }}
             >
               <Text style={styles.buttonText}>
                 {loading ? 'Cargando...' : 'Iniciar Sesión'}
@@ -139,16 +151,16 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             {showAuthError ? (
-              <Text style={styles.errorText}>{authErrorRef.current}</Text>
+              <Text style={[styles.errorText, { color: colors.error }]}>{authErrorRef.current}</Text>
             ) : null}
 
-            <TouchableOpacity onPress={() => router.push('/signup')}>
-              <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
+            <TouchableOpacity onPress={() => router.push('/signup')} accessible={true} accessibilityLabel="Registrarse" accessibilityRole="link">
+              <Text style={[styles.linkText, { color: colors.primary }]}>¿No tienes cuenta? Regístrate</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      
+
       <CustomModal
         visible={modalVisible}
         title={modalRef.current.title}
@@ -166,63 +178,57 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
   },
   content: {
-    padding: 20,
+    padding: 24,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#007AFF',
+    marginBottom: 12,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 18,
     textAlign: 'center',
-    marginBottom: 30,
-    color: '#666',
+    marginBottom: 32,
+    fontWeight: '500',
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
+    padding: 16,
+    marginBottom: 16,
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
+    padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 15,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
+    marginBottom: 16,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   linkText: {
-    color: '#007AFF',
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '500',
   },
   errorText: {
-    color: '#f44336',
     textAlign: 'center',
     fontSize: 14,
-    marginTop: 10,
+    marginTop: 12,
+    fontWeight: '500',
   },
 });

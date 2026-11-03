@@ -10,3 +10,14 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
+export interface Note {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  synced: boolean;
+  deleted: boolean;
+}

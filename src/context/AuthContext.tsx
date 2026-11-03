@@ -33,6 +33,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Guardar en Dexie para offline
       await syncService.saveUserOffline(response.user);
       await syncService.markUserSynced(response.user.id);
+      
+      // Limpiar acciones pendientes inválidas
+      await syncService.cleanupInvalidPendingActions();
     } catch (error: any) {
       if (error.code === 'ECONNREFUSED' || !error.response) {
         await syncService.addPendingAction('login', { email, password });

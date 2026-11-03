@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { AgendaItem } from '../../types';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../context/ThemeContext';
 
 // Mock data - se reemplazará con datos reales de MongoDB y sync
 const mockAgenda: AgendaItem[] = [
@@ -29,6 +30,7 @@ const mockAgenda: AgendaItem[] = [
 
 export default function AgendaScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [agenda, setAgenda] = useState<AgendaItem[]>(mockAgenda);
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -79,44 +81,47 @@ export default function AgendaScreen() {
   };
 
   const renderItem = ({ item }: { item: AgendaItem }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.cardHeader}>
-        <Text style={styles.title}>{item.title}</Text>
-        <TouchableOpacity onPress={() => handleDeleteItem(item.id)}>
-          <Text style={styles.deleteText}>Eliminar</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
+        <TouchableOpacity onPress={() => handleDeleteItem(item.id)} accessible={true} accessibilityLabel="Eliminar evento" accessibilityRole="button">
+          <Text style={[styles.deleteText, { color: colors.error }]}>Eliminar</Text>
         </TouchableOpacity>
       </View>
       {item.description && (
-        <Text style={styles.description}>{item.description}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{item.description}</Text>
       )}
       <View style={styles.cardFooter}>
         <View style={styles.dateContainer}>
           <Text style={styles.dateLabel}>📅</Text>
-          <Text style={styles.dateText}>
+          <Text style={[styles.dateText, { color: colors.textSecondary }]}>
             {new Date(item.date).toLocaleDateString()}
           </Text>
         </View>
         {item.time && (
           <View style={styles.timeContainer}>
             <Text style={styles.timeLabel}>⏰</Text>
-            <Text style={styles.timeText}>{item.time}</Text>
+            <Text style={[styles.timeText, { color: colors.textSecondary }]}>{item.time}</Text>
           </View>
         )}
       </View>
-      {!item.synced && <Text style={styles.syncBadge}>Sin sincronizar</Text>}
+      {!item.synced && <Text style={[styles.syncBadge, { backgroundColor: colors.warning, color: colors.text }]}>Sin sincronizar</Text>}
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Volver</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessible={true} accessibilityLabel="Volver" accessibilityRole="button">
+          <Text style={[styles.backButtonText, { color: colors.primary }]}>← Volver</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Agenda</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Agenda</Text>
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => setShowModal(true)}
+          accessible={true}
+          accessibilityLabel="Crear nuevo evento"
+          accessibilityRole="button"
         >
           <Text style={styles.addButtonText}>+ Evento</Text>
         </TouchableOpacity>
@@ -195,54 +200,46 @@ export default function AgendaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   backButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   backButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   addButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 8,
   },
   addButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 14,
   },
   listContent: {
-    padding: 15,
+    padding: 16,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -251,19 +248,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 17,
+    fontWeight: '600',
     flex: 1,
+    letterSpacing: -0.3,
   },
   deleteText: {
-    color: '#FF3B30',
     fontSize: 12,
+    fontWeight: '500',
   },
   description: {
-    color: '#666',
     fontSize: 14,
-    marginBottom: 10,
+    marginBottom: 12,
+    lineHeight: 20,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -279,7 +276,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 14,
-    color: '#666',
   },
   timeContainer: {
     flexDirection: 'row',
@@ -291,14 +287,11 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 14,
-    color: '#666',
   },
   syncBadge: {
-    fontSize: 10,
-    color: '#FF9500',
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    fontSize: 11,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 4,
     alignSelf: 'flex-start',
     marginTop: 8,
@@ -306,16 +299,15 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50,
+    paddingVertical: 60,
   },
   emptyText: {
     fontSize: 18,
-    color: '#999',
-    marginBottom: 5,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#ccc',
   },
   modal: {
     position: 'absolute',
@@ -328,24 +320,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
+    borderRadius: 12,
+    padding: 24,
     width: '90%',
     maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
+    fontWeight: '700',
+    marginBottom: 16,
+    letterSpacing: -0.5,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+    padding: 14,
+    marginBottom: 16,
     fontSize: 16,
   },
   modalButtons: {
@@ -354,19 +344,14 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    padding: 12,
+    padding: 14,
     borderRadius: 8,
     alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  cancelButton: {
-    backgroundColor: '#e0e0e0',
-  },
-  confirmButton: {
-    backgroundColor: '#007AFF',
+    marginHorizontal: 6,
   },
   modalButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

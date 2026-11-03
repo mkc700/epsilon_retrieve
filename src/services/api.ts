@@ -43,4 +43,26 @@ export const authAPI = {
   },
 };
 
+export const notesAPI = {
+  getNotes: async () => {
+    const response = await api.get('/notes');
+    return response.data;
+  },
+
+  createNote: async (title: string, content: string) => {
+    const response = await api.post('/notes', { title, content });
+    return response.data;
+  },
+
+  updateNote: async (id: string, title: string, content: string) => {
+    const response = await api.put(`/notes/${id}`, { title, content });
+    return response.data;
+  },
+
+  deleteNote: async (id: string) => {
+    const response = await api.delete(`/notes/${id}`);
+    return response.data;
+  },
+};
+
 export default api;

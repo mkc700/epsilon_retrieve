@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { TodoItem } from '../../types';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../context/ThemeContext';
 
 // Mock data - estilo Microsoft To Do
 const mockTodos: TodoItem[] = [
@@ -45,6 +46,7 @@ export default function TodosScreen() {
   const [newDescription, setNewDescription] = useState('');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const { colors } = useTheme();
   const router = useRouter();
 
   const handleAddTodo = () => {
@@ -99,13 +101,13 @@ export default function TodosScreen() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return '#FF3B30';
+        return colors.error;
       case 'medium':
-        return '#FF9500';
+        return colors.warning;
       case 'low':
-        return '#34C759';
+        return colors.success;
       default:
-        return '#999';
+        return colors.textTertiary;
     }
   };
 
@@ -150,42 +152,57 @@ export default function TodosScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Volver</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessible={true} accessibilityLabel="Volver" accessibilityRole="button">
+          <Text style={[styles.backButtonText, { color: colors.primary }]}>← Volver</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mis Tareas</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Mis Tareas</Text>
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => setShowModal(true)}
+          accessible={true}
+          accessibilityLabel="Crear nueva tarea"
+          accessibilityRole="button"
         >
           <Text style={styles.addButtonText}>+ Nueva Tarea</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.filterContainer}>
+      <View style={[styles.filterContainer, { backgroundColor: colors.surface }]}>
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]}
+          style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === 'all' && { backgroundColor: colors.primary }]}
           onPress={() => setFilter('all')}
+          accessible={true}
+          accessibilityLabel="Filtrar todas las tareas"
+          accessibilityRole="button"
+          accessibilityState={{ selected: filter === 'all' }}
         >
-          <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
+          <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'all' && { color: '#fff' }]}>
             Todas
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'active' && styles.filterButtonActive]}
+          style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === 'active' && { backgroundColor: colors.primary }]}
           onPress={() => setFilter('active')}
+          accessible={true}
+          accessibilityLabel="Filtrar tareas activas"
+          accessibilityRole="button"
+          accessibilityState={{ selected: filter === 'active' }}
         >
-          <Text style={[styles.filterText, filter === 'active' && styles.filterTextActive]}>
+          <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'active' && { color: '#fff' }]}>
             Activas
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.filterButton, filter === 'completed' && styles.filterButtonActive]}
+          style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === 'completed' && { backgroundColor: colors.primary }]}
           onPress={() => setFilter('completed')}
+          accessible={true}
+          accessibilityLabel="Filtrar tareas completadas"
+          accessibilityRole="button"
+          accessibilityState={{ selected: filter === 'completed' }}
         >
-          <Text style={[styles.filterText, filter === 'completed' && styles.filterTextActive]}>
+          <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'completed' && { color: '#fff' }]}>
             Completadas
           </Text>
         </TouchableOpacity>
@@ -267,101 +284,83 @@ export default function TodosScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   backButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   backButtonText: {
-    color: '#007AFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
     flex: 1,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   addButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 8,
   },
   addButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 14,
   },
   filterContainer: {
     flexDirection: 'row',
-    padding: 15,
-    backgroundColor: '#fff',
-    gap: 10,
+    padding: 16,
+    gap: 8,
   },
   filterButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
     alignItems: 'center',
   },
-  filterButtonActive: {
-    backgroundColor: '#007AFF',
-  },
   filterText: {
-    color: '#666',
     fontSize: 14,
     fontWeight: '600',
   },
-  filterTextActive: {
-    color: '#fff',
-  },
   listContent: {
-    padding: 15,
+    padding: 16,
   },
   todoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
   },
   completedCard: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   todoContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   checkboxChecked: {
-    backgroundColor: '#007AFF',
+    borderWidth: 0,
   },
   checkmark: {
     color: '#fff',
@@ -374,16 +373,15 @@ const styles = StyleSheet.create({
   todoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   todoDescription: {
     fontSize: 14,
-    color: '#666',
+    lineHeight: 20,
   },
   completedText: {
     textDecorationLine: 'line-through',
-    color: '#999',
   },
   todoFooter: {
     flexDirection: 'row',
@@ -397,18 +395,16 @@ const styles = StyleSheet.create({
   },
   priorityText: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   deleteText: {
-    color: '#FF3B30',
     fontSize: 12,
+    fontWeight: '500',
   },
   syncBadge: {
-    fontSize: 10,
-    color: '#FF9500',
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    fontSize: 11,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 4,
     alignSelf: 'flex-start',
     marginTop: 8,
@@ -416,16 +412,15 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 50,
+    paddingVertical: 60,
   },
   emptyText: {
     fontSize: 18,
-    color: '#999',
-    marginBottom: 5,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#ccc',
   },
   modal: {
     position: 'absolute',
@@ -438,30 +433,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
+    borderRadius: 12,
+    padding: 24,
     width: '90%',
     maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
+    fontWeight: '700',
+    marginBottom: 16,
+    letterSpacing: -0.5,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+    padding: 14,
+    marginBottom: 16,
     fontSize: 16,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   prioritySelector: {
@@ -478,12 +470,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   priorityOptionSelected: {
-    backgroundColor: '#007AFF',
+    borderWidth: 0,
   },
   priorityOptionText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '600',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -491,19 +482,14 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    padding: 12,
+    padding: 14,
     borderRadius: 8,
     alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  cancelButton: {
-    backgroundColor: '#e0e0e0',
-  },
-  confirmButton: {
-    backgroundColor: '#007AFF',
+    marginHorizontal: 6,
   },
   modalButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
