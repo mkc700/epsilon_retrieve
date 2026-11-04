@@ -12,7 +12,7 @@ function RootNavigator() {
 
   useEffect(() => {
     if (!loading) {
-      if (true) { // Replace 'true' with your actual authentication check
+      if (isAuthenticated) {
         router.replace('/menu');
       } else {
         router.replace('/login');
