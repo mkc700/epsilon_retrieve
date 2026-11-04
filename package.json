@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test:agenda": "node --test tests/agenda.test.cjs tests/agenda-client.test.cjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
