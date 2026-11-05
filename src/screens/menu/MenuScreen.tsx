@@ -86,9 +86,12 @@ export default function MenuScreen() {
     []
   );
 
-  const onScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    { useNativeDriver: true, listener: syncActiveIndex }
+  const onScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollX.setValue(event.nativeEvent.contentOffset.x);
+      syncActiveIndex(event);
+    },
+    [scrollX, syncActiveIndex]
   );
 
   const isPomodoroActive = activeIndex === SECTIONS.length - 1;

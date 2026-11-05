@@ -11,8 +11,10 @@ import {
   ScrollView,
   Pressable,
   Modal,
+  useWindowDimensions,
   type KeyDownEvent,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Note } from '../../types/index';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { notesService } from '../../services/notesService';
@@ -42,6 +44,8 @@ export default function NotesScreen() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const narrow = width < 500;
   const router = useRouter();
   const usesFinePointer = hasFinePointer();
   const [modal, setModal] = useState<{
@@ -368,7 +372,7 @@ export default function NotesScreen() {
             >
               <Text style={[styles.backButtonText, { color: colors.primary }]}>Cancelar</Text>
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
+            <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
               {selectedNotes.size} seleccionadas
             </Text>
             <TouchableOpacity
@@ -386,9 +390,9 @@ export default function NotesScreen() {
         ) : (
           <>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessible={true} accessibilityLabel="Volver" accessibilityRole="button">
-              <Text style={[styles.backButtonText, { color: colors.primary }]}>← Volver</Text>
+              <Text style={[styles.backButtonText, { color: colors.primary }]}>{narrow ? '←' : '← Volver'}</Text>
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Mis Notas</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Mis Notas</Text>
             <View style={styles.headerActions}>
               <TouchableOpacity
                 style={[styles.iconButton, { backgroundColor: colors.surfaceSecondary }]}
@@ -397,7 +401,11 @@ export default function NotesScreen() {
                 accessibilityLabel="Seleccionar múltiples"
                 accessibilityRole="button"
               >
-                <Text style={[styles.iconButtonText, { color: colors.text }]}>Seleccionar</Text>
+                {narrow ? (
+                  <Feather name="check-square" size={18} color={colors.text} />
+                ) : (
+                  <Text style={[styles.iconButtonText, { color: colors.text }]}>Seleccionar</Text>
+                )}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.addButton, { backgroundColor: colors.primary }]}
@@ -406,7 +414,9 @@ export default function NotesScreen() {
                 accessibilityLabel="Crear nueva nota"
                 accessibilityRole="button"
               >
-                <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>+ Nueva Nota</Text>
+                <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>
+                  {narrow ? '+ Nota' : '+ Nueva Nota'}
+                </Text>
               </TouchableOpacity>
             </View>
           </>

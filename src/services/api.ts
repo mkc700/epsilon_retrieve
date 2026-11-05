@@ -1,12 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
-
-// La configuración tiene prioridad en todas las plataformas.
-// En un teléfono físico, EXPO_PUBLIC_API_URL debe usar la IP del equipo o la URL del backend.
-const API_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android'
-  ? 'http://192.168.0.157:5000/api' 
-  : 'http://localhost:5000/api');
+import { API_URL } from '../utils/apiUrl';
 
 const api = axios.create({
   baseURL: API_URL,

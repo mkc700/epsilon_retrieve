@@ -1,15 +1,13 @@
 // src/api/todoApi.ts
 import { TodoItem } from '../types';
-
-// Usa localhost:5000 para Web, o 10.0.2.2:5000 si usas Emulador de Android
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+import { API_URL } from '../utils/apiUrl';
 
 export const todoApi = {
   getTodos: async (token: string): Promise<TodoItem[]> => {
     const response = await fetch(`${API_URL}/todos`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!response.ok) throw new Error('Error al cargar tareas');
+    if (!response.ok) throw new Error(`Error al cargar tareas (${response.status})`);
     return response.json();
   },
 
