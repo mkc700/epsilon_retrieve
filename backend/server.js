@@ -1,4 +1,5 @@
 require('dotenv').config();
+const todoRoutes = require('./routes/todos');
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -17,7 +18,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
-
+app.use('/api/todos', todoRoutes);
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });

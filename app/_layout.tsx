@@ -4,6 +4,11 @@ import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
+// 1. Importación de TanStack Query
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// 2. Instancia global fuera del ciclo de renderizado
+const queryClient = new QueryClient();
 
 function RootNavigator() {
   const { isAuthenticated, loading } = useAuth();
@@ -42,11 +47,13 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
-    </ThemeProvider>
+    // 3. Envoltorio general con QueryClientProvider
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
-
