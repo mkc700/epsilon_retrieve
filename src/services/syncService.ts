@@ -3,6 +3,7 @@ import { authAPI, notesAPI } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { notesService } from './notesService';
+import { syncAgenda } from './agendaService';
 
 const SYNC_INTERVAL_MS = 30 * 1000;
 
@@ -96,11 +97,15 @@ class SyncService {
 
   // Procesar acciones pendientes cuando hay conexión
   async syncPendingActions(): Promise<void> {
+    if (!this.isOnline) return;
     if (this.syncInFlight) {
       return this.syncInFlight;
     }
 
-    this.syncInFlight = this.runSync().finally(() => {
+    this.syncInFlight = Promise.all([
+      this.runSync(),
+      syncAgenda().catch(error => console.error('Agenda sync failed:', error.message)),
+    ]).then(() => undefined).finally(() => {
       this.syncInFlight = null;
     });
 

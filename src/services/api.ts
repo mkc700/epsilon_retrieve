@@ -2,13 +2,15 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-// Usar IP de la red local para Android, localhost para web/iOS simulator
-const API_URL = Platform.OS === 'android' 
+// La configuración tiene prioridad en todas las plataformas.
+// En un teléfono físico, EXPO_PUBLIC_API_URL debe usar la IP del equipo o la URL del backend.
+const API_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android'
   ? 'http://192.168.0.157:5000/api' 
-  : (Platform.OS === 'web' ? 'http://localhost:5000/api' : (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api'));
+  : 'http://localhost:5000/api');
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,7 +20,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('token');
-    if (token) {
+    if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -37,8 +39,8 @@ export const authAPI = {
     return response.data;
   },
 
-  getMe: async () => {
-    const response = await api.get('/auth/me');
+  getMe: async (token?: string) => {
+    const response = await api.get('/auth/me', token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
     return response.data;
   },
 };
@@ -66,3 +68,18 @@ export const notesAPI = {
 };
 
 export default api;
+
+// Each sync captures its token so switching accounts cannot reassign in-flight events.
+export const agendaAPI = {
+  list: async (token: string) => {
+    const response = await api.get('/agenda', { params: { includeDeleted: true }, headers: { Authorization: `Bearer ${token}` } });
+    return response.data;
+  },
+  put: async (id: string, fields: { title: string; description: string; date: string; time: string }, token: string) => {
+    const response = await api.put(`/agenda/${encodeURIComponent(id)}`, fields, { headers: { Authorization: `Bearer ${token}` } });
+    return response.data;
+  },
+  remove: async (id: string, token: string) => {
+    await api.delete(`/agenda/${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${token}` } });
+  },
+};

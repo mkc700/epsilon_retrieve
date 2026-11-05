@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  Modal,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
+  Alert,
 } from 'react-native';
-import { AgendaItem } from '../../types';
+import { Feather } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { CustomModal } from '../../components/CustomModal';
 
 // Mock data - se reemplazará con datos reales de MongoDB y sync
 const mockAgenda: AgendaItem[] = [
@@ -32,14 +32,16 @@ const mockAgenda: AgendaItem[] = [
   },
 ];
 
-type FeedbackModal = {
-  visible: boolean;
-  title: string;
-  message: string;
-  type: 'success' | 'error' | 'info';
-};
-
 export default function AgendaScreen() {
+  const { user } = useAuth();
+  const userId = user?.id || 'local-development';
+
+  return (
+    <AgendaContent key={userId} userId={userId} />
+  );
+}
+
+function AgendaContent({ userId }: { userId: string }) {
   const router = useRouter();
   const { colors } = useTheme();
   const [agenda, setAgenda] = useState<AgendaItem[]>(mockAgenda);
@@ -48,28 +50,10 @@ export default function AgendaScreen() {
   const [newDescription, setNewDescription] = useState('');
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
-  const [feedbackModal, setFeedbackModal] = useState<FeedbackModal>({
-    visible: false,
-    title: '',
-    message: '',
-    type: 'info',
-  });
-  const [itemToDelete, setItemToDelete] = useState<AgendaItem | null>(null);
-
-  const showModalMessage = (title: string, message: string, type: FeedbackModal['type'] = 'info') => {
-    setFeedbackModal({ visible: true, title, message, type });
-  };
-
-  const resetForm = () => {
-    setNewTitle('');
-    setNewDescription('');
-    setNewDate('');
-    setNewTime('');
-  };
 
   const handleAddItem = () => {
     if (!newTitle.trim() || !newDate.trim()) {
-      showModalMessage('Error', 'El título y la fecha son requeridos', 'error');
+      Alert.alert('Error', 'El título y la fecha son requeridos');
       return;
     }
     const newItem: AgendaItem = {
@@ -85,164 +69,126 @@ export default function AgendaScreen() {
       deleted: false,
     };
     setAgenda([newItem, ...agenda]);
-    resetForm();
+    setNewTitle('');
+    setNewDescription('');
+    setNewDate('');
+    setNewTime('');
     setShowModal(false);
   };
 
-  const confirmDeleteItem = () => {
-    if (!itemToDelete) return;
-    setAgenda(agenda.filter(item => item.id !== itemToDelete.id));
-    setItemToDelete(null);
+  const handleDeleteItem = (id: string) => {
+    Alert.alert(
+      'Eliminar evento',
+      '¿Estás seguro de eliminar este evento?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => {
+            setAgenda(agenda.filter(item => item.id !== id));
+          },
+        },
+      ]
+    );
   };
 
   const renderItem = ({ item }: { item: AgendaItem }) => (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.cardHeader}>
         <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
-        <TouchableOpacity
-          onPress={() => setItemToDelete(item)}
-          accessible={true}
-          accessibilityLabel="Eliminar evento"
-          accessibilityRole="button"
-        >
+        <TouchableOpacity onPress={() => handleDeleteItem(item.id)} accessible={true} accessibilityLabel="Eliminar evento" accessibilityRole="button">
           <Text style={[styles.deleteText, { color: colors.error }]}>Eliminar</Text>
         </TouchableOpacity>
       </View>
-      {item.description ? (
+      {item.description && (
         <Text style={[styles.description, { color: colors.textSecondary }]}>{item.description}</Text>
-      ) : null}
+      )}
       <View style={styles.cardFooter}>
         <View style={styles.dateContainer}>
-          <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Fecha</Text>
+          <Text style={styles.dateLabel}>📅</Text>
           <Text style={[styles.dateText, { color: colors.textSecondary }]}>
             {new Date(item.date).toLocaleDateString()}
           </Text>
         </View>
-        {item.time ? (
+        {item.time && (
           <View style={styles.timeContainer}>
-            <Text style={[styles.timeLabel, { color: colors.textSecondary }]}>Hora</Text>
+            <Text style={styles.timeLabel}>⏰</Text>
             <Text style={[styles.timeText, { color: colors.textSecondary }]}>{item.time}</Text>
           </View>
-        ) : null}
+        )}
       </View>
-      {!item.synced && (
-        <Text style={[styles.syncBadge, { backgroundColor: colors.warning, color: colors.onWarning }]}>
-          Sin sincronizar
-        </Text>
-      )}
+      {!item.synced && <Text style={[styles.syncBadge, { backgroundColor: colors.warning, color: colors.text }]}>Sin sincronizar</Text>}
     </View>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-        ]}
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-          accessible={true}
-          accessibilityLabel="Volver"
-          accessibilityRole="button"
-        >
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessible={true} accessibilityLabel="Volver" accessibilityRole="button">
           <Text style={[styles.backButtonText, { color: colors.primary }]}>← Volver</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Agenda</Text>
         <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
-          onPress={() => setShowModal(true)}
-          accessible={true}
+          accessibilityRole="button"
           accessibilityLabel="Crear nuevo evento"
           accessibilityRole="button"
         >
-          <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>+ Evento</Text>
+          <Text style={styles.addButtonText}>+ Evento</Text>
         </TouchableOpacity>
       </View>
 
-      <Modal
-        visible={showModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => {
-          setShowModal(false);
-          resetForm();
-        }}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}
-        >
-          <View style={styles.modal}>
-            <ScrollView keyboardShouldPersistTaps="handled" style={styles.modalScroll}>
-              <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Nuevo Evento</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                  placeholder="Título"
-                  placeholderTextColor={colors.textTertiary}
-                  value={newTitle}
-                  onChangeText={setNewTitle}
-                  accessible={true}
-                  accessibilityLabel="Título del evento"
-                />
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                  placeholder="Descripción (opcional)"
-                  placeholderTextColor={colors.textTertiary}
-                  value={newDescription}
-                  onChangeText={setNewDescription}
-                  accessible={true}
-                  accessibilityLabel="Descripción del evento"
-                />
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                  placeholder="Fecha (YYYY-MM-DD)"
-                  placeholderTextColor={colors.textTertiary}
-                  value={newDate}
-                  onChangeText={setNewDate}
-                  accessible={true}
-                  accessibilityLabel="Fecha del evento"
-                />
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                  placeholder="Hora (HH:MM)"
-                  placeholderTextColor={colors.textTertiary}
-                  value={newTime}
-                  onChangeText={setNewTime}
-                  accessible={true}
-                  accessibilityLabel="Hora del evento"
-                />
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: colors.surfaceSecondary }]}
-                    onPress={() => {
-                      setShowModal(false);
-                      resetForm();
-                    }}
-                    accessible={true}
-                    accessibilityLabel="Cancelar"
-                    accessibilityRole="button"
-                  >
-                    <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancelar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: colors.primary }]}
-                    onPress={handleAddItem}
-                    accessible={true}
-                    accessibilityLabel="Guardar evento"
-                    accessibilityRole="button"
-                  >
-                    <Text style={[styles.modalButtonText, { color: colors.onPrimary }]}>Guardar</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ScrollView>
+      {showModal && (
+        <View style={styles.modal}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Nuevo Evento</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Título"
+              value={newTitle}
+              onChangeText={setNewTitle}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Descripción (opcional)"
+              value={newDescription}
+              onChangeText={setNewDescription}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Fecha (YYYY-MM-DD)"
+              value={newDate}
+              onChangeText={setNewDate}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Hora (HH:MM)"
+              value={newTime}
+              onChangeText={setNewTime}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setShowModal(false);
+                  setNewTitle('');
+                  setNewDescription('');
+                  setNewDate('');
+                  setNewTime('');
+                }}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleAddItem}
+              >
+                <Text style={styles.modalButtonText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        </View>
+      )}
 
       <FlatList
         data={agenda}
@@ -251,145 +197,225 @@ export default function AgendaScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No hay eventos</Text>
-            <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>
+            <Text style={styles.emptyText}>No hay eventos</Text>
+            <Text style={styles.emptySubtext}>
               Agrega tu primer evento a la agenda
             </Text>
           </View>
         }
-      />
-
-      <CustomModal
-        visible={feedbackModal.visible}
-        title={feedbackModal.title}
-        message={feedbackModal.message}
-        type={feedbackModal.type}
-        onClose={() => setFeedbackModal(current => ({ ...current, visible: false }))}
-      />
-
-      <CustomModal
-        visible={itemToDelete !== null}
-        title="Eliminar evento"
-        message="¿Estás seguro de eliminar este evento?"
-        type="error"
-        confirmLabel="Eliminar"
-        cancelLabel="Cancelar"
-        destructive
-        onClose={() => setItemToDelete(null)}
-        onConfirm={confirmDeleteItem}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
   },
   header: {
+    minHeight: 76,
+    borderBottomWidth: 1,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  backButton: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    minHeight: 44,
+    paddingRight: 8,
+  },
+  backText: {
+    fontSize: 13,
+  },
+  headerBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  addText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  page: {
+    width: '100%',
+    maxWidth: 1220,
+    alignSelf: 'center',
+    paddingTop: 30,
+  },
+  intro: {
+    marginBottom: 25,
+    gap: 8,
+  },
+  pageTitle: {
+    fontSize: 27,
+    fontWeight: '700',
+    letterSpacing: -0.8,
+    lineHeight: 34,
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  workspace: {
+    gap: 20,
+    alignItems: 'stretch',
+  },
+  desktopWorkspace: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  calendarPanel: {
+    borderWidth: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  calendarFooter: {
+    borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingHorizontal: 18,
     paddingVertical: 16,
+  },
+  legend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  legendDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  calendarHint: {
+    fontSize: 10,
+  },
+  dayPanel: {
+    borderWidth: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  dayHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 13,
+    padding: 19,
     borderBottomWidth: 1,
   },
   backButton: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    minHeight: 44,
-    justifyContent: 'center',
   },
-  backButtonText: {
-    fontSize: 15,
+  tileWeekday: {
+    fontSize: 9,
     fontWeight: '600',
+    letterSpacing: 0.7,
   },
   headerTitle: {
-    flex: 1,
     fontSize: 24,
     fontWeight: '700',
-    textAlign: 'center',
     letterSpacing: -0.5,
   },
   addButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    minHeight: 44,
-    justifyContent: 'center',
   },
   addButtonText: {
+    color: '#fff',
     fontWeight: '600',
     fontSize: 14,
-    letterSpacing: 0.2,
   },
-  listContent: {
+  eventList: {
     padding: 16,
+    gap: 12,
   },
-  card: {
+  eventCard: {
+    borderWidth: 1,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-  },
-  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-    gap: 16,
   },
-  title: {
-    fontSize: 17,
-    fontWeight: '600',
+  eventAccent: {
+    width: 3,
+    alignSelf: 'stretch',
+    minHeight: 41,
+    borderRadius: 2,
+  },
+  eventBody: {
     flex: 1,
-    letterSpacing: -0.3,
+    gap: 7,
+  },
+  eventTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   deleteText: {
     fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.2,
+    fontWeight: '500',
   },
-  description: {
-    fontSize: 14,
-    marginBottom: 12,
+  eventTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 21,
+  },
+  eventDescription: {
+    fontSize: 12,
     lineHeight: 20,
   },
   cardFooter: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 15,
   },
-  dateContainer: {
+  localInfo: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   dateLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.2,
-    marginRight: 6,
+    fontSize: 16,
+    marginRight: 5,
   },
   dateText: {
     fontSize: 14,
-    lineHeight: 20,
   },
-  timeContainer: {
+  syncButton: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   timeLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.2,
-    marginRight: 6,
+    fontSize: 16,
+    marginRight: 5,
   },
   timeText: {
     fontSize: 14,
-    lineHeight: 20,
   },
-  syncBadge: {
+  syncButtonText: {
     fontSize: 11,
-    fontWeight: '600',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
@@ -399,64 +425,68 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    gap: 15,
   },
-  emptyText: {
-    fontSize: 18,
-    marginBottom: 8,
-    fontWeight: '500',
+  loadingText: {
+    fontSize: 12,
   },
   emptySubtext: {
     fontSize: 14,
-    lineHeight: 20,
-  },
-  modalContainer: {
-    flex: 1,
   },
   modal: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
-    alignItems: 'center',
+    gap: 15,
   },
-  modalScroll: {
-    width: '100%',
+  errorTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   modalContent: {
     borderRadius: 12,
     padding: 24,
     width: '90%',
-    maxWidth: 400,
-    alignSelf: 'center',
     maxHeight: '80%',
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 16,
-    letterSpacing: -0.5,
-  },
-  input: {
+  notice: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+    maxWidth: 650,
+    alignSelf: 'center',
+    marginHorizontal: 'auto',
     borderWidth: 1,
     borderRadius: 8,
     padding: 14,
     marginBottom: 16,
     fontSize: 16,
-    lineHeight: 24,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
   },
-  modalButton: {
+  noticeText: {
     flex: 1,
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
+    marginHorizontal: 6,
   },
   modalButtonText: {
+    color: '#fff',
     fontWeight: '600',
-    fontSize: 16,
+  },
+  dismissNotice: {
+    width: 35,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
