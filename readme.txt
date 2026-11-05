@@ -15,3 +15,4 @@ tambien inicializando el servidor en mongo db atlas
 
 el frontend se inicia en la carpeta raiz con npm start en otra terminal
 
+. ahora si
