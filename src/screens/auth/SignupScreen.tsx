@@ -130,7 +130,7 @@ export default function SignupScreen() {
               accessibilityRole="button"
               accessibilityState={{ disabled: loading }}
             >
-              <Text style={styles.buttonText}>
+              <Text style={[styles.buttonText, { color: colors.onPrimary }]}>
                 {loading ? 'Cargando...' : 'Crear Cuenta'}
               </Text>
             </TouchableOpacity>
@@ -186,15 +186,17 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     fontSize: 16,
+    lineHeight: 24,
   },
   button: {
+    minHeight: 52,
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   buttonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },

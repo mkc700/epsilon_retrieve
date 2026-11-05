@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-02T00:00:00.000Z",
+  "title": "Design System: Epsilon Retrieve",
+  "extensions": {
+    "colorMeta": {
+      "paper":           { "role": "neutral", "displayName": "Paper",           "canonical": "#ffffff", "tonalRamp": ["#1c1c1c", "#333333", "#4d4d4d", "#6b6b6b", "#8a8a8a", "#b3b3b3", "#d9d9d9", "#ffffff"] },
+      "folio":           { "role": "neutral", "displayName": "Folio",           "canonical": "#f8f9fa", "tonalRamp": ["#16181a", "#2a2d31", "#3f4348", "#5a5f66", "#7d838b", "#a6adb5", "#cfd4d9", "#f8f9fa"] },
+      "folio-deep":      { "role": "neutral", "displayName": "Folio Deep",      "canonical": "#f1f3f4", "tonalRamp": ["#141618", "#272a2d", "#3b3f44", "#565b62", "#777d86", "#a0a6ae", "#c9ced4", "#f1f3f4"] },
+      "ink":             { "role": "neutral", "displayName": "Ink",             "canonical": "#1a1a1a", "tonalRamp": ["#0d0d0d", "#1a1a1a", "#2e2e2e", "#454545", "#5f6368", "#7d838a", "#a9adb2", "#d6d8db"] },
+      "ink-soft":        { "role": "neutral", "displayName": "Ink Soft",        "canonical": "#5f6368", "tonalRamp": ["#1b1d20", "#2f3237", "#454a51", "#5f6368", "#7c8189", "#9aa0a6", "#bcc1c7", "#e2e5e8"] },
+      "ink-faint":       { "role": "neutral", "displayName": "Ink Faint",       "canonical": "#9aa0a6", "tonalRamp": ["#2a2d31", "#3f4348", "#575c63", "#71767e", "#9aa0a6", "#b6bbc1", "#d0d4d9", "#eef0f2"] },
+      "sangre-seca":     { "role": "primary", "displayName": "Sangre Seca",     "canonical": "#a12624", "tonalRamp": ["#230908", "#3f0e0d", "#5c1513", "#7d1f1d", "#a12624", "#c86b63", "#e0a89f", "#f5e4e4"] },
+      "sangre-wash":     { "role": "primary", "displayName": "Sangre Wash",     "canonical": "#f5e4e4", "tonalRamp": ["#3a2320", "#5c3a35", "#7f534c", "#a26f67", "#c18f88", "#d9b3ad", "#ecd2ce", "#f5e4e4"] },
+      "sangre-profundo": { "role": "primary", "displayName": "Sangre Profundo", "canonical": "#4a100f", "tonalRamp": ["#170505", "#2b0908", "#4a100f", "#6e1b19", "#932a24", "#b8524a", "#d48a82", "#f0c8c2"] },
+      "hairline":        { "role": "neutral", "displayName": "Hairline",        "canonical": "#e0e0e0", "tonalRamp": ["#1f1f1f", "#333333", "#4d4d4d", "#6b6b6b", "#8c8c8c", "#adadad", "#cbcbcb", "#e0e0e0"] },
+      "error":           { "role": "status",  "displayName": "Error",           "canonical": "#dc3545", "tonalRamp": ["#2b0a0e", "#4a1219", "#6b1a24", "#8f2230", "#dc3545", "#e26a75", "#ec9ba4", "#f7cdd1"] },
+      "success":         { "role": "status",  "displayName": "Success",         "canonical": "#28a745", "tonalRamp": ["#0a2412", "#123a1f", "#1a5330", "#226b3f", "#28a745", "#63c07c", "#97d4a9", "#cdeed6"] },
+      "warning":         { "role": "status",  "displayName": "Warning",         "canonical": "#ffc107", "tonalRamp": ["#2e2203", "#4a3705", "#6b4f07", "#8f6a0a", "#ffc107", "#ffd14d", "#ffe084", "#fff3c2"] },
+      "disabled":        { "role": "status",  "displayName": "Disabled",        "canonical": "#c4c4c4", "tonalRamp": ["#1f1f1f", "#333333", "#4a4a4a", "#616161", "#7d7d7d", "#9c9c9c", "#b1b1b1", "#c4c4c4"] }
+    },
+    "typographyMeta": {
+      "display":  { "displayName": "Display",  "purpose": "Auth screen title and once-per-flow declarations only." },
+      "headline": { "displayName": "Headline", "purpose": "Screen header titles (Notas, Tareas, Agenda); one per screen, centered." },
+      "title":    { "displayName": "Title",    "purpose": "Modal titles, context-menu headers, section heads." },
+      "body":     { "displayName": "Body",     "purpose": "Inputs, list item content, screen copy; note content steps down to 15px/22px." },
+      "label":    { "displayName": "Label",    "purpose": "Badges, filter pills, tab labels, button captions; 11px absolute floor." }
+    },
+    "shadows": [
+      { "name": "ambient-low", "value": "0 2px 8px rgba(0,0,0,0.10)", "purpose": "Tab carousel buttons at rest (elevation 5); the smallest lift." },
+      { "name": "lift-active", "value": "0 4px 12px rgba(74,16,15,0.30)", "purpose": "The active tab only (elevation 8). Incumbent code tints this #007AFF; normative tint is sangre-profundo." },
+      { "name": "modal-raised", "value": "0 2px 4px rgba(0,0,0,0.25)", "purpose": "Modal containers over the 0.5 black scrim (elevation 10, radius 3.84px)." }
+    ],
+    "motion": [
+      { "name": "duration-fast", "value": "200ms", "purpose": "Modal exit and quick fades." },
+      { "name": "duration-base", "value": "300ms", "purpose": "Modal entrance fade." },
+      { "name": "duration-slow", "value": "500ms", "purpose": "Tab carousel scale/opacity interpolation." },
+      { "name": "easing-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for state transitions." },
+      { "name": "spring-modal", "value": "friction 8, tension 40", "purpose": "CustomModal scale spring; useNativeDriver false." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single primary action on a screen; full-width on auth flows.",
+      "html": "<button class=\"ds-btn-primary\">Iniciar Sesión</button>",
+      "css": ".ds-btn-primary { display: block; width: 100%; background: #a12624; color: #ffffff; font-family: -apple-system, Roboto, sans-serif; font-size: 16px; font-weight: 600; padding: 16px; border: none; border-radius: 8px; text-align: center; cursor: pointer; transition: background 0.2s; } .ds-btn-primary:hover { background: #8a1f1d; } .ds-btn-primary:active { background: #4a100f; } .ds-btn-primary:focus-visible { outline: 2px solid #a12624; outline-offset: 2px; } .ds-btn-primary:disabled { background: #c4c4c4; cursor: default; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Single-line field; hairline border, 8px radius, sangre-seca focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Título de la nota\" aria-label=\"Título de la nota\" />",
+      "css": ".ds-input { display: block; width: 100%; box-sizing: border-box; background: #ffffff; color: #1a1a1a; font-family: -apple-system, Roboto, sans-serif; font-size: 16px; padding: 14px 16px; border: 1px solid #e0e0e0; border-radius: 8px; outline: none; transition: border-color 0.15s; } .ds-input::placeholder { color: #9aa0a6; } .ds-input:focus { border-color: #a12624; } .ds-input:focus-visible { outline: 2px solid #a12624; outline-offset: 1px; } .ds-input:disabled { background: #f1f3f4; color: #9aa0a6; }"
+    },
+    {
+      "name": "Note Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Flat, bordered list card for notes/todos/agenda items; never casts a shadow at rest.",
+      "html": "<article class=\"ds-card-note\"><h3 class=\"ds-card-note-title\">Reunión con equipo</h3><p class=\"ds-card-note-body\">Puntos a tratar: roadmap Q3, retro y presupuesto.</p><span class=\"ds-card-note-date\">12 may 2026</span></article>",
+      "css": ".ds-card-note { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px; margin-bottom: 12px; font-family: -apple-system, Roboto, sans-serif; } .ds-card-note-title { margin: 0 0 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.3px; color: #1a1a1a; } .ds-card-note-body { margin: 0 0 8px; font-size: 15px; line-height: 22px; color: #5f6368; } .ds-card-note-date { font-size: 12px; color: #9aa0a6; }"
+    },
+    {
+      "name": "Filter Pill",
+      "kind": "chip",
+      "refersTo": "pill-filter",
+      "description": "Segmented filter (Todas / Activas / Completadas); active state flips to sangre-seca.",
+      "html": "<div class=\"ds-pill-group\" role=\"tablist\"><button class=\"ds-pill ds-pill-active\" role=\"tab\" aria-selected=\"true\">Todas</button><button class=\"ds-pill\" role=\"tab\" aria-selected=\"false\">Activas</button><button class=\"ds-pill\" role=\"tab\" aria-selected=\"false\">Completadas</button></div>",
+      "css": ".ds-pill-group { display: flex; gap: 8px; padding: 16px; background: #f8f9fa; font-family: -apple-system, Roboto, sans-serif; } .ds-pill { flex: 1; padding: 10px 16px; border: none; border-radius: 20px; background: #f1f3f4; color: #5f6368; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; } .ds-pill:hover { background: #e0e0e0; } .ds-pill:focus-visible { outline: 2px solid #a12624; outline-offset: 2px; } .ds-pill-active { background: #a12624; color: #ffffff; } .ds-pill-active:hover { background: #8a1f1d; }"
+    },
+    {
+      "name": "Header Bar",
+      "kind": "nav",
+      "refersTo": "modal-content",
+      "description": "Screen header: centered 24px/700 title, back affordance left, sangre-seca add chip right; 1px hairline below.",
+      "html": "<header class=\"ds-header-bar\"><button class=\"ds-header-back\" aria-label=\"Volver\">‹ Atrás</button><h1 class=\"ds-header-title\">Notas</h1><button class=\"ds-header-add\" aria-label=\"Añadir nota\">+ Añadir</button></header>",
+      "css": ".ds-header-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: #f8f9fa; border-bottom: 1px solid #e0e0e0; font-family: -apple-system, Roboto, sans-serif; } .ds-header-back { background: none; border: none; font-size: 15px; font-weight: 600; color: #1a1a1a; padding: 4px 8px; cursor: pointer; } .ds-header-back:focus-visible { outline: 2px solid #a12624; outline-offset: 2px; } .ds-header-title { margin: 0; flex: 1; text-align: center; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #1a1a1a; } .ds-header-add { background: #a12624; color: #ffffff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; } .ds-header-add:hover { background: #8a1f1d; } .ds-header-add:focus-visible { outline: 2px solid #a12624; outline-offset: 2px; }"
+    },
+    {
+      "name": "CustomModal",
+      "kind": "custom",
+      "refersTo": "modal-content",
+      "description": "Blocking confirmation/feedback dialog; colored header band, white glyph, full-width OK action.",
+      "html": "<div class=\"ds-modal-overlay\"><div class=\"ds-modal\" role=\"alertdialog\" aria-modal=\"true\" aria-label=\"Guardado\"><div class=\"ds-modal-header\"><span class=\"ds-modal-icon\">✓</span><h2 class=\"ds-modal-title\">Guardado</h2></div><div class=\"ds-modal-body\"><p class=\"ds-modal-message\">La nota se guardó correctamente.</p></div><button class=\"ds-modal-ok\">OK</button></div></div>",
+      "css": ".ds-modal-overlay { display: flex; align-items: center; justify-content: center; min-height: 320px; background: rgba(0,0,0,0.5); padding: 20px; font-family: -apple-system, Roboto, sans-serif; } .ds-modal { width: 100%; max-width: 400px; background: #f8f9fa; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.25); } .ds-modal-header { display: flex; align-items: center; gap: 12px; padding: 20px; background: #a12624; } .ds-modal-icon { font-size: 32px; font-weight: 700; color: #ffffff; } .ds-modal-title { margin: 0; flex: 1; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: #ffffff; } .ds-modal-body { padding: 20px; } .ds-modal-message { margin: 0; font-size: 16px; line-height: 24px; color: #1a1a1a; } .ds-modal-ok { display: block; width: 100%; padding: 16px; border: none; background: #a12624; color: #ffffff; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.15s; } .ds-modal-ok:hover { background: #8a1f1d; } .ds-modal-ok:focus-visible { outline: 2px solid #4a100f; outline-offset: -2px; }"
+    },
+    {
+      "name": "Sync Badge",
+      "kind": "chip",
+      "refersTo": "card-surface",
+      "description": "\"Sin sincronizar\" warning tag; the only badge allowed to interrupt a card. Dark text on warning fill.",
+      "html": "<span class=\"ds-badge-sync\">Sin sincronizar</span>",
+      "css": ".ds-badge-sync { display: inline-block; background: #ffc107; color: #1a1a1a; font-family: -apple-system, Roboto, sans-serif; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }"
+    },
+    {
+      "name": "Priority Badge",
+      "kind": "chip",
+      "refersTo": "pill-filter",
+      "description": "Todo priority tag (HIGH/MEDIUM/LOW); 20%-opacity tint of the semantic color with matching full-strength text.",
+      "html": "<span class=\"ds-priority ds-priority-high\">HIGH</span><span class=\"ds-priority ds-priority-medium\">MEDIUM</span><span class=\"ds-priority ds-priority-low\">LOW</span>",
+      "css": ".ds-priority { display: inline-block; font-family: -apple-system, Roboto, sans-serif; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; padding: 4px 10px; border-radius: 12px; margin-right: 6px; } .ds-priority-high { background: rgba(220,53,69,0.125); color: #dc3545; } .ds-priority-medium { background: rgba(255,193,7,0.125); color: #b07d00; } .ds-priority-low { background: rgba(40,167,69,0.125); color: #28a745; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Cuaderno Rojo",
+    "overview": "Epsilon Retrieve is a working notebook, not a showcase. The system is tuned for *preciso y archivero* — precise and archival — a surface that behaves like a well-kept card index: everything filed, everything legible, nothing shouting. The deep oxblood (`sangre-seca`) is the thread that stitches notas, tareas and agenda into one object; it appears where a hand would reach for the red pen, and almost nowhere else. Density is moderate, rhythm is calm, and the interface recedes behind the capture task.\n\nElevation is **softly lifted**: surfaces rest on hairline borders and tonal layering, and shadows are reserved for things that genuinely float — the active tab, modals, floating layers — where they read as ambient lift rather than decoration. Components are **suave y acogedor** (soft and welcoming): generous 8–16px radii, forgiving contrast, rounded affordances that feel approachable rather than institutional.\n\nConfirmed anti-reference: the **generic iOS-blue clone**. The tab carousel and header in `app/(tabs)/_layout.tsx` hardcode `#007AFF` / `#FF3B30` / `#fff`, bypassing the theme entirely; that look is explicitly rejected. The red system owns the accent.",
+    "keyCharacteristics": [
+      "Spanish-first UI copy; the notebook metaphor is literal, not decorative",
+      "One accent (sangre-seca), used with archival restraint",
+      "Flat at rest; hairline borders and tonal layers do the separating; shadows only for floating layers",
+      "System typography (SF on iOS, Roboto on Android); no custom brand face",
+      "Generous radii (8/12/16px), 44pt-class touch targets, accessibility labels throughout",
+      "Dark scheme is first-class and paired 1:1 with the light scheme via useTheme()"
+    ],
+    "rules": [
+      { "name": "The Sangre Rule", "body": "Sangre Seca appears on ≤10% of any given screen. If two elements on a screen compete for it, one of them is wrong.", "section": "colors" },
+      { "name": "The Hairline Rule", "body": "Separation is drawn with 1px Hairline borders or tonal steps (Paper → Folio → Folio Deep), never with heavy strokes or drop shadows at rest.", "section": "colors" },
+      { "name": "The One Family Rule", "body": "No second typeface enters the system. Emphasis comes from weight, size and tracking — never from a decorative face.", "section": "typography" },
+      { "name": "The Tight Heading Rule", "body": "All headings carry −0.5px letter-spacing; body and labels stay at 0 or +0.2px.", "section": "typography" },
+      { "name": "The Float Rule", "body": "A shadow means \"this floats above the page.\" If a surface is part of the page's reading order, it stays flat and bordered.", "section": "elevation" },
+      { "name": "The Scrim Rule", "body": "Modals always sit on a 0.5 black scrim; never on a blurred or translucent backdrop.", "section": "elevation" },
+      { "name": "The Radius Ladder Rule", "body": "4 → 8 → 12 → 16 → 20(pill). Never introduce an intermediate radius; pick the nearest rung.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do route every color through useTheme() tokens; add a new token to ThemeContext.tsx before using a new value anywhere.",
+      "Do keep Sangre Seca ≤10% of any screen — one primary action, one active state, nothing else.",
+      "Do separate surfaces with Paper → Folio → Folio Deep tonal steps and 1px Hairline borders.",
+      "Do reserve shadows for floating layers (active tab, modal); everything in the reading order stays flat.",
+      "Do keep the Radius Ladder: 4 / 8 / 12 / 16 / 20(pill); nearest rung wins.",
+      "Do write UI copy in Spanish, sentence case, with direct verbs (\"Guardar\", \"Cancelar\", \"Iniciar Sesión\").",
+      "Do pair warning fills with dark text and keep all status colors functional, never ornamental.",
+      "Do keep headings at −0.5px tracking and body at 0/+0.2px; one typeface, weight does the work.",
+      "Do provide accessibilityLabel / accessibilityRole on every touchable; the codebase already does — don't regress it."
+    ],
+    "donts": [
+      "Don't hardcode #007AFF, #FF3B30, #fff, #666, #999 or any raw hex in screens — app/(tabs)/_layout.tsx currently does this and is the canonical defect to fix, not to imitate.",
+      "Don't introduce a second accent, gradient, glow, or glassmorphism; the world is paper, folio and one red.",
+      "Don't apply shadows to list cards, inputs or pills at rest.",
+      "Don't use Pure Black (#000) for text or borders; use Ink and Hairline.",
+      "Don't drop below 11px for meaningful text or below 44×44pt for touch targets.",
+      "Don't add a display/serif/mono face; the One Family Rule is absolute.",
+      "Don't recolor completed todos — dim with opacity and strikethrough only.",
+      "Don't invent new radii between rungs, or pill-shaped primary buttons (pill is for filters and the logout chip).",
+      "Don't bypass CustomModal with Alert.alert for in-flow success/error feedback where the modal pattern already exists."
+    ]
+  }
+}

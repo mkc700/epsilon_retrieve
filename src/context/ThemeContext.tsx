@@ -21,6 +21,11 @@ interface Theme {
     primary: string;
     primaryLight: string;
     primaryDark: string;
+    primaryPressed: string;
+    onPrimary: string;
+    onWarning: string;
+    onError: string;
+    shadow: string;
     border: string;
     error: string;
     success: string;
@@ -42,6 +47,11 @@ const lightTheme: Theme['colors'] = {
   primary: COLORS.redMedium,
   primaryLight: COLORS.redLight,
   primaryDark: COLORS.redDark,
+  primaryPressed: COLORS.redDark,
+  onPrimary: '#ffffff',
+  onWarning: '#1a1a1a',
+  onError: '#ffffff',
+  shadow: '#000000',
   border: '#e0e0e0',
   error: '#dc3545',
   success: '#28a745',
@@ -60,11 +70,16 @@ const darkTheme: Theme['colors'] = {
   primary: COLORS.redMedium,
   primaryLight: COLORS.redDark,
   primaryDark: COLORS.redLight,
+  primaryPressed: COLORS.redDark,
+  onPrimary: '#ffffff',
+  onWarning: '#1a1a1a',
+  onError: '#ffffff',
+  shadow: '#000000',
   border: '#3d3d3d',
   error: '#ff6b6b',
   success: '#4ade80',
   warning: '#fbbf24',
-  focusRing: COLORS.redMedium,
+  focusRing: '#d16765',
   disabled: '#4a4a4a',
 };
 

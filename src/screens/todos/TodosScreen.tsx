@@ -6,11 +6,15 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  Alert,
+  Modal,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import { TodoItem } from '../../types';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
+import { CustomModal } from '../../components/CustomModal';
 
 // Mock data - estilo Microsoft To Do
 const mockTodos: TodoItem[] = [
@@ -39,6 +43,13 @@ const mockTodos: TodoItem[] = [
   },
 ];
 
+type FeedbackModal = {
+  visible: boolean;
+  title: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+};
+
 export default function TodosScreen() {
   const [todos, setTodos] = useState<TodoItem[]>(mockTodos);
   const [showModal, setShowModal] = useState(false);
@@ -46,12 +57,29 @@ export default function TodosScreen() {
   const [newDescription, setNewDescription] = useState('');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [feedbackModal, setFeedbackModal] = useState<FeedbackModal>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
+  const [todoToDelete, setTodoToDelete] = useState<TodoItem | null>(null);
   const { colors } = useTheme();
   const router = useRouter();
 
+  const showModalMessage = (title: string, message: string, type: FeedbackModal['type'] = 'info') => {
+    setFeedbackModal({ visible: true, title, message, type });
+  };
+
+  const resetForm = () => {
+    setNewTitle('');
+    setNewDescription('');
+    setNewPriority('medium');
+  };
+
   const handleAddTodo = () => {
     if (!newTitle.trim()) {
-      Alert.alert('Error', 'El título es requerido');
+      showModalMessage('Error', 'El título es requerido', 'error');
       return;
     }
     const newTodo: TodoItem = {
@@ -67,9 +95,7 @@ export default function TodosScreen() {
       deleted: false,
     };
     setTodos([newTodo, ...todos]);
-    setNewTitle('');
-    setNewDescription('');
-    setNewPriority('medium');
+    resetForm();
     setShowModal(false);
   };
 
@@ -81,21 +107,10 @@ export default function TodosScreen() {
     );
   };
 
-  const handleDeleteTodo = (id: string) => {
-    Alert.alert(
-      'Eliminar tarea',
-      '¿Estás seguro de eliminar esta tarea?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: () => {
-            setTodos(todos.filter(todo => todo.id !== id));
-          },
-        },
-      ]
-    );
+  const confirmDeleteTodo = () => {
+    if (!todoToDelete) return;
+    setTodos(todos.filter(todo => todo.id !== todoToDelete.id));
+    setTodoToDelete(null);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -117,44 +132,100 @@ export default function TodosScreen() {
     return true;
   });
 
-  const renderTodo = ({ item }: { item: TodoItem }) => (
-    <View style={[styles.todoCard, item.completed && styles.completedCard]}>
-      <TouchableOpacity
-        style={styles.todoContent}
-        onPress={() => handleToggleComplete(item.id)}
+  const renderTodo = ({ item }: { item: TodoItem }) => {
+    const priorityColor = getPriorityColor(item.priority);
+
+    return (
+      <View
+        style={[
+          styles.todoCard,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+          item.completed && styles.completedCard,
+        ]}
       >
-        <View style={[styles.checkbox, item.completed && styles.checkboxChecked]}>
-          {item.completed && <Text style={styles.checkmark}>✓</Text>}
-        </View>
-        <View style={styles.todoTextContainer}>
-          <Text style={[styles.todoTitle, item.completed && styles.completedText]}>
-            {item.title}
-          </Text>
-          {item.description && (
-            <Text style={[styles.todoDescription, item.completed && styles.completedText]}>
-              {item.description}
+        <TouchableOpacity
+          style={styles.todoContent}
+          onPress={() => handleToggleComplete(item.id)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: item.completed }}
+          accessibilityLabel={`${item.completed ? 'Marcar como pendiente' : 'Completar'}: ${item.title}`}
+        >
+          <View
+            style={[
+              styles.checkbox,
+              { borderColor: colors.primary },
+              item.completed && { backgroundColor: colors.primary, borderColor: colors.primary },
+            ]}
+          >
+            {item.completed && <Text style={[styles.checkmark, { color: colors.onPrimary }]}>—</Text>}
+          </View>
+          <View style={styles.todoTextContainer}>
+            <Text
+              style={[
+                styles.todoTitle,
+                { color: colors.text },
+                item.completed && styles.completedText,
+              ]}
+            >
+              {item.title}
             </Text>
-          )}
-        </View>
-      </TouchableOpacity>
-      <View style={styles.todoFooter}>
-        <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(item.priority) + '20' }]}>
-          <Text style={[styles.priorityText, { color: getPriorityColor(item.priority) }]}>
-            {item.priority.toUpperCase()}
-          </Text>
-        </View>
-        <TouchableOpacity onPress={() => handleDeleteTodo(item.id)}>
-          <Text style={styles.deleteText}>Eliminar</Text>
+            {item.description ? (
+              <Text
+                style={[
+                  styles.todoDescription,
+                  { color: colors.textSecondary },
+                  item.completed && styles.completedText,
+                ]}
+              >
+                {item.description}
+              </Text>
+            ) : null}
+          </View>
         </TouchableOpacity>
+        <View style={styles.todoFooter}>
+          <View style={[styles.priorityBadge, { backgroundColor: `${priorityColor}20` }]}>
+            <Text
+              style={[
+                styles.priorityText,
+                { color: item.priority === 'medium' ? colors.onWarning : priorityColor },
+              ]}
+            >
+              {item.priority.toUpperCase()}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => setTodoToDelete(item)}
+            accessible={true}
+            accessibilityLabel="Eliminar tarea"
+            accessibilityRole="button"
+          >
+            <Text style={[styles.deleteText, { color: colors.error }]}>Eliminar</Text>
+          </TouchableOpacity>
+        </View>
+        {!item.synced && (
+          <Text style={[styles.syncBadge, { backgroundColor: colors.warning, color: colors.onWarning }]}>
+            Sin sincronizar
+          </Text>
+        )}
       </View>
-      {!item.synced && <Text style={styles.syncBadge}>Sin sincronizar</Text>}
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessible={true} accessibilityLabel="Volver" accessibilityRole="button">
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          accessible={true}
+          accessibilityLabel="Volver"
+          accessibilityRole="button"
+        >
           <Text style={[styles.backButtonText, { color: colors.primary }]}>← Volver</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Mis Tareas</Text>
@@ -165,103 +236,131 @@ export default function TodosScreen() {
           accessibilityLabel="Crear nueva tarea"
           accessibilityRole="button"
         >
-          <Text style={styles.addButtonText}>+ Nueva Tarea</Text>
+          <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>+ Nueva Tarea</Text>
         </TouchableOpacity>
       </View>
 
       <View style={[styles.filterContainer, { backgroundColor: colors.surface }]}>
-        <TouchableOpacity
-          style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === 'all' && { backgroundColor: colors.primary }]}
-          onPress={() => setFilter('all')}
-          accessible={true}
-          accessibilityLabel="Filtrar todas las tareas"
-          accessibilityRole="button"
-          accessibilityState={{ selected: filter === 'all' }}
-        >
-          <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'all' && { color: '#fff' }]}>
-            Todas
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === 'active' && { backgroundColor: colors.primary }]}
-          onPress={() => setFilter('active')}
-          accessible={true}
-          accessibilityLabel="Filtrar tareas activas"
-          accessibilityRole="button"
-          accessibilityState={{ selected: filter === 'active' }}
-        >
-          <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'active' && { color: '#fff' }]}>
-            Activas
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterButton, { backgroundColor: colors.surfaceSecondary }, filter === 'completed' && { backgroundColor: colors.primary }]}
-          onPress={() => setFilter('completed')}
-          accessible={true}
-          accessibilityLabel="Filtrar tareas completadas"
-          accessibilityRole="button"
-          accessibilityState={{ selected: filter === 'completed' }}
-        >
-          <Text style={[styles.filterText, { color: colors.textSecondary }, filter === 'completed' && { color: '#fff' }]}>
-            Completadas
-          </Text>
-        </TouchableOpacity>
+        {([
+          { id: 'all', label: 'Todas', accessibilityLabel: 'Filtrar todas las tareas' },
+          { id: 'active', label: 'Activas', accessibilityLabel: 'Filtrar tareas activas' },
+          { id: 'completed', label: 'Completadas', accessibilityLabel: 'Filtrar tareas completadas' },
+        ] as const).map(item => (
+          <TouchableOpacity
+            key={item.id}
+            style={[
+              styles.filterButton,
+              { backgroundColor: colors.surfaceSecondary },
+              filter === item.id && { backgroundColor: colors.primary },
+            ]}
+            onPress={() => setFilter(item.id)}
+            accessible={true}
+            accessibilityLabel={item.accessibilityLabel}
+            accessibilityRole="button"
+            accessibilityState={{ selected: filter === item.id }}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                { color: colors.textSecondary },
+                filter === item.id && { color: colors.onPrimary },
+              ]}
+            >
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {showModal && (
-        <View style={styles.modal}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nueva Tarea</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Título"
-              value={newTitle}
-              onChangeText={setNewTitle}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Descripción (opcional)"
-              value={newDescription}
-              onChangeText={setNewDescription}
-            />
-            <Text style={styles.label}>Prioridad:</Text>
-            <View style={styles.prioritySelector}>
-              {(['low', 'medium', 'high'] as const).map(priority => (
-                <TouchableOpacity
-                  key={priority}
-                  style={[
-                    styles.priorityOption,
-                    newPriority === priority && styles.priorityOptionSelected,
-                    { borderColor: getPriorityColor(priority) },
-                  ]}
-                  onPress={() => setNewPriority(priority)}
-                >
-                  <Text style={styles.priorityOptionText}>{priority.toUpperCase()}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setShowModal(false);
-                  setNewTitle('');
-                  setNewDescription('');
-                  setNewPriority('medium');
-                }}
-              >
-                <Text style={styles.modalButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleAddTodo}
-              >
-                <Text style={styles.modalButtonText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
+      <Modal
+        visible={showModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setShowModal(false);
+          resetForm();
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <View style={styles.modal}>
+            <ScrollView keyboardShouldPersistTaps="handled" style={styles.modalScroll}>
+              <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Nueva Tarea</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="Título"
+                  placeholderTextColor={colors.textTertiary}
+                  value={newTitle}
+                  onChangeText={setNewTitle}
+                  accessible={true}
+                  accessibilityLabel="Título de la tarea"
+                />
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="Descripción (opcional)"
+                  placeholderTextColor={colors.textTertiary}
+                  value={newDescription}
+                  onChangeText={setNewDescription}
+                  accessible={true}
+                  accessibilityLabel="Descripción de la tarea"
+                />
+                <Text style={[styles.label, { color: colors.text }]}>Prioridad:</Text>
+                <View style={styles.prioritySelector}>
+                  {(['low', 'medium', 'high'] as const).map(priority => {
+                    const selected = newPriority === priority;
+                    const priorityColor = getPriorityColor(priority);
+
+                    return (
+                      <TouchableOpacity
+                        key={priority}
+                        style={[
+                          styles.priorityOption,
+                          { borderColor: priorityColor },
+                          selected && { backgroundColor: `${priorityColor}20` },
+                        ]}
+                        onPress={() => setNewPriority(priority)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={`Prioridad ${priority.toUpperCase()}`}
+                      >
+                        <Text style={[styles.priorityOptionText, { color: colors.text }]}>
+                          {priority.toUpperCase()}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: colors.surfaceSecondary }]}
+                    onPress={() => {
+                      setShowModal(false);
+                      resetForm();
+                    }}
+                    accessible={true}
+                    accessibilityLabel="Cancelar"
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                    onPress={handleAddTodo}
+                    accessible={true}
+                    accessibilityLabel="Guardar tarea"
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.modalButtonText, { color: colors.onPrimary }]}>Guardar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
-      )}
+        </KeyboardAvoidingView>
+      </Modal>
 
       <FlatList
         data={filteredTodos}
@@ -270,12 +369,32 @@ export default function TodosScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay tareas</Text>
-            <Text style={styles.emptySubtext}>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No hay tareas</Text>
+            <Text style={[styles.emptySubtext, { color: colors.textTertiary }]}>
               Crea tu primera tarea para comenzar
             </Text>
           </View>
         }
+      />
+
+      <CustomModal
+        visible={feedbackModal.visible}
+        title={feedbackModal.title}
+        message={feedbackModal.message}
+        type={feedbackModal.type}
+        onClose={() => setFeedbackModal(current => ({ ...current, visible: false }))}
+      />
+
+      <CustomModal
+        visible={todoToDelete !== null}
+        title="Eliminar tarea"
+        message="¿Estás seguro de eliminar esta tarea?"
+        type="error"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        destructive
+        onClose={() => setTodoToDelete(null)}
+        onConfirm={confirmDeleteTodo}
       />
     </View>
   );
@@ -296,15 +415,17 @@ const styles = StyleSheet.create({
   backButton: {
     paddingHorizontal: 8,
     paddingVertical: 4,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   backButtonText: {
     fontSize: 15,
     fontWeight: '600',
   },
   headerTitle: {
+    flex: 1,
     fontSize: 24,
     fontWeight: '700',
-    flex: 1,
     textAlign: 'center',
     letterSpacing: -0.5,
   },
@@ -312,11 +433,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   addButtonText: {
-    color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+    letterSpacing: 0.2,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -328,6 +451,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   filterText: {
     fontSize: 14,
@@ -354,17 +479,13 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    borderWidth: 2,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  checkboxChecked: {
-    borderWidth: 0,
-  },
   checkmark: {
-    color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 14,
   },
   todoTextContainer: {
@@ -387,6 +508,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 16,
   },
   priorityBadge: {
     paddingHorizontal: 10,
@@ -396,13 +518,16 @@ const styles = StyleSheet.create({
   priorityText: {
     fontSize: 10,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   deleteText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   syncBadge: {
     fontSize: 11,
+    fontWeight: '600',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
@@ -421,21 +546,26 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
+    lineHeight: 20,
+  },
+  modalContainer: {
+    flex: 1,
   },
   modal: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalScroll: {
+    width: '100%',
   },
   modalContent: {
     borderRadius: 12,
     padding: 24,
     width: '90%',
+    maxWidth: 400,
+    alignSelf: 'center',
     maxHeight: '80%',
   },
   modalTitle: {
@@ -450,6 +580,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 16,
     fontSize: 16,
+    lineHeight: 24,
   },
   label: {
     fontSize: 14,
@@ -459,36 +590,35 @@ const styles = StyleSheet.create({
   prioritySelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
     marginBottom: 20,
   },
   priorityOption: {
     flex: 1,
+    minHeight: 44,
     paddingVertical: 10,
     borderRadius: 8,
-    borderWidth: 2,
+    borderWidth: 1,
     alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  priorityOptionSelected: {
-    borderWidth: 0,
+    justifyContent: 'center',
   },
   priorityOptionText: {
     fontSize: 12,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 12,
   },
   modalButton: {
     flex: 1,
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
-    marginHorizontal: 6,
   },
   modalButtonText: {
-    color: '#fff',
     fontWeight: '600',
     fontSize: 16,
   },

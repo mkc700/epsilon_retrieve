@@ -15,6 +15,10 @@ interface CustomModalProps {
   message: string;
   type?: 'success' | 'error' | 'info';
   onClose: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm?: () => void;
+  destructive?: boolean;
 }
 
 export const CustomModal: React.FC<CustomModalProps> = ({
@@ -23,6 +27,10 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   message,
   type = 'info',
   onClose,
+  confirmLabel = 'Confirmar',
+  cancelLabel = 'Cancelar',
+  onConfirm,
+  destructive = false,
 }) => {
   const { colors } = useTheme();
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -74,12 +82,12 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return '✓';
+        return 'OK';
       case 'error':
-        return '✕';
+        return '!';
       case 'info':
       default:
-        return 'ℹ';
+        return 'i';
     }
   };
 
@@ -98,19 +106,46 @@ export const CustomModal: React.FC<CustomModalProps> = ({
               opacity: fadeAnim,
               transform: [{ scale: scaleAnim }],
               backgroundColor: colors.surface,
+              shadowColor: colors.shadow,
             },
           ]}
         >
           <View style={[styles.header, { backgroundColor: getBackgroundColor() }]}>
-            <Text style={styles.icon}>{getIcon()}</Text>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.icon, { color: colors.onPrimary }]}>{getIcon()}</Text>
+            <Text style={[styles.title, { color: colors.onPrimary }]}>{title}</Text>
           </View>
           <View style={styles.body}>
             <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
           </View>
-          <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={onClose}>
-            <Text style={styles.buttonText}>OK</Text>
-          </TouchableOpacity>
+          {onConfirm ? (
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={[styles.button, styles.secondaryButton, { backgroundColor: colors.surfaceSecondary }]}
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel={cancelLabel}
+              >
+                <Text style={[styles.buttonText, { color: colors.text }]}>{cancelLabel}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.secondaryButton, { backgroundColor: destructive ? colors.error : colors.primary }]}
+                onPress={onConfirm}
+                accessibilityRole="button"
+                accessibilityLabel={confirmLabel}
+              >
+                <Text style={[styles.buttonText, { color: colors.onPrimary }]}>{confirmLabel}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: colors.primary }]}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="OK"
+            >
+              <Text style={[styles.buttonText, { color: colors.onPrimary }]}>OK</Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -131,7 +166,6 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     overflow: 'hidden',
     elevation: 10,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -143,14 +177,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   icon: {
-    fontSize: 32,
-    color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#fff',
     flex: 1,
     letterSpacing: -0.5,
   },
@@ -161,12 +194,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 16,
+  },
   button: {
     padding: 16,
     alignItems: 'center',
   },
+  secondaryButton: {
+    flex: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+  },
   buttonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },

@@ -21,3 +21,29 @@ export interface Note {
   synced: boolean;
   deleted: boolean;
 }
+
+export interface TodoItem {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  priority: 'low' | 'medium' | 'high';
+  createdAt: string;
+  updatedAt: string;
+  synced: boolean;
+  deleted: boolean;
+}
+
+export interface AgendaItem {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  date: string;
+  time?: string;
+  createdAt: string;
+  updatedAt: string;
+  synced: boolean;
+  deleted: boolean;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -20,61 +20,34 @@ export default function LoginScreen() {
   const { login, loading } = useAuth();
   const { colors } = useTheme();
   const router = useRouter();
-  
-  const modalRef = useRef<{
-    visible: boolean;
-    title: string;
-    message: string;
-    type: 'success' | 'error' | 'info';
-  }>({
-    visible: false,
-    title: '',
-    message: '',
-    type: 'info'
-  });
 
   const [modalVisible, setModalVisible] = useState(false);
-  const authErrorRef = useRef('');
-  const [showAuthError, setShowAuthError] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
-
-  console.log('Render - authError:', authErrorRef.current, 'showAuthError:', showAuthError);
-
-  useEffect(() => {
-    console.log('useEffect - showAuthError:', showAuthError, 'authErrorRef.current:', authErrorRef.current);
-  }, [showAuthError, forceUpdate]);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState<'success' | 'error' | 'info'>('info');
+  const [authError, setAuthError] = useState('');
 
   const showModal = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    modalRef.current = {
-      visible: true,
-      title,
-      message,
-      type
-    };
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalType(type);
     setModalVisible(true);
   };
 
   const handleLogin = async () => {
-    authErrorRef.current = '';
-    setShowAuthError(false);
+    setAuthError('');
+
     if (!email || !password) {
       showModal('Error', 'Por favor completa todos los campos', 'error');
       return;
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       showModal('Error', 'Por favor ingresa un correo electrónico válido', 'error');
       return;
     }
-    
-    // Prueba: mostrar texto de error siempre
-    authErrorRef.current = 'Usuario no encontrado';
-    setTimeout(() => {
-      setShowAuthError(true);
-      setForceUpdate(prev => prev + 1);
-    }, 100);
-    
+
     try {
       await login(email, password);
       showModal('¡Bienvenido de nuevo!', 'Has iniciado sesión exitosamente', 'success');
@@ -82,22 +55,32 @@ export default function LoginScreen() {
         router.replace('/menu');
       }, 1500);
     } catch (error: any) {
-      let errorMessage = error.message || 'No se pudo iniciar sesión';
-      console.log('Error message in LoginScreen:', errorMessage);
-      
-      if (errorMessage.includes('User not found') || errorMessage.includes('usuario no encontrado') || errorMessage.includes('no existe')) {
-        errorMessage = 'El usuario no existe. Por favor verifica tu correo electrónico.';
-      } else if (errorMessage.includes('Invalid credentials') || errorMessage.includes('credenciales') || errorMessage.includes('contraseña incorrecta')) {
-        authErrorRef.current = errorMessage;
-        setShowAuthError(true);
-        setForceUpdate(prev => prev + 1);
-        console.log('Setting authError:', errorMessage);
+      const rawMessage = error?.message || 'No se pudo iniciar sesión';
+
+      if (
+        rawMessage.includes('Invalid credentials') ||
+        rawMessage.includes('credenciales') ||
+        rawMessage.includes('contraseña incorrecta')
+      ) {
+        setAuthError('El correo o la contraseña son incorrectos.');
         return;
-      } else if (errorMessage.includes('Sin conexión')) {
-        errorMessage = 'Sin conexión al servidor. Verifica tu conexión a internet.';
       }
-      
-      showModal('Error', errorMessage, 'error');
+
+      if (
+        rawMessage.includes('User not found') ||
+        rawMessage.includes('usuario no encontrado') ||
+        rawMessage.includes('no existe')
+      ) {
+        showModal('Error', 'El usuario no existe. Por favor verifica tu correo electrónico.', 'error');
+        return;
+      }
+
+      if (rawMessage.includes('Sin conexión')) {
+        showModal('Error', 'Sin conexión al servidor. Verifica tu conexión a internet.', 'error');
+        return;
+      }
+
+      showModal('Error', rawMessage, 'error');
     }
   };
 
@@ -118,9 +101,13 @@ export default function LoginScreen() {
                 placeholder="Correo electrónico"
                 placeholderTextColor={colors.textTertiary}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={text => {
+                  setEmail(text);
+                  setAuthError('');
+                }}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                autoComplete="email"
                 accessible={true}
                 accessibilityLabel="Correo electrónico"
               />
@@ -129,8 +116,12 @@ export default function LoginScreen() {
                 placeholder="Contraseña"
                 placeholderTextColor={colors.textTertiary}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={text => {
+                  setPassword(text);
+                  setAuthError('');
+                }}
                 secureTextEntry
+                autoComplete="password"
                 accessible={true}
                 accessibilityLabel="Contraseña"
               />
@@ -145,16 +136,21 @@ export default function LoginScreen() {
               accessibilityRole="button"
               accessibilityState={{ disabled: loading }}
             >
-              <Text style={styles.buttonText}>
+              <Text style={[styles.buttonText, { color: colors.onPrimary }]}>
                 {loading ? 'Cargando...' : 'Iniciar Sesión'}
               </Text>
             </TouchableOpacity>
 
-            {showAuthError ? (
-              <Text style={[styles.errorText, { color: colors.error }]}>{authErrorRef.current}</Text>
+            {authError ? (
+              <Text style={[styles.errorText, { color: colors.error }]}>{authError}</Text>
             ) : null}
 
-            <TouchableOpacity onPress={() => router.push('/signup')} accessible={true} accessibilityLabel="Registrarse" accessibilityRole="link">
+            <TouchableOpacity
+              onPress={() => router.push('/signup')}
+              accessible={true}
+              accessibilityLabel="Registrarse"
+              accessibilityRole="link"
+            >
               <Text style={[styles.linkText, { color: colors.primary }]}>¿No tienes cuenta? Regístrate</Text>
             </TouchableOpacity>
           </View>
@@ -163,13 +159,10 @@ export default function LoginScreen() {
 
       <CustomModal
         visible={modalVisible}
-        title={modalRef.current.title}
-        message={modalRef.current.message}
-        type={modalRef.current.type}
-        onClose={() => {
-          setModalVisible(false);
-          modalRef.current = { visible: false, title: '', message: '', type: 'info' };
-        }}
+        title={modalTitle}
+        message={modalMessage}
+        type={modalType}
+        onClose={() => setModalVisible(false)}
       />
     </>
   );
@@ -208,15 +201,17 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     fontSize: 16,
+    lineHeight: 24,
   },
   button: {
+    minHeight: 52,
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   buttonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -228,7 +223,8 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
     fontSize: 14,
-    marginTop: 12,
+    lineHeight: 20,
     fontWeight: '500',
+    marginTop: 12,
   },
 });
