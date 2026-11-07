@@ -68,8 +68,10 @@ export const db = {
   pendingActions: {
     add: async (action: Omit<PendingAction, 'id'>) => {
       const actions = await db.pendingActions.toArray();
-      actions.push({ ...action, id: createId() });
+      const created = { ...action, id: createId() };
+      actions.push(created);
       await AsyncStorage.setItem('pending_actions', JSON.stringify(actions));
+      return created;
     },
     toArray: async () => {
       return readJson<PendingAction[]>('pending_actions', []);

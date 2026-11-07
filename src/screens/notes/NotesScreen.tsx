@@ -24,6 +24,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { CustomModal } from '../../components/CustomModal';
 import { ContextMenu, type ContextMenuAction, type ContextMenuAnchor } from '../../components/ContextMenu';
 import { hasFinePointer } from '../../utils/pointer';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type WebContextMenuEvent = {
   preventDefault?: () => void;
@@ -44,6 +45,7 @@ export default function NotesScreen() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const narrow = width < 500;
   const router = useRouter();
@@ -359,7 +361,7 @@ export default function NotesScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         {selectionMode ? (
           <>
@@ -519,10 +521,12 @@ export default function NotesScreen() {
         destructive
         onClose={() => setNoteToDelete(null)}
         onConfirm={() => {
-          if (noteToDelete === 'multiple') {
+          const target = noteToDelete;
+          setNoteToDelete(null);
+          if (target === 'multiple') {
             void handleDeleteSelected();
-          } else if (noteToDelete) {
-            void handleDeleteNote(noteToDelete);
+          } else if (target) {
+            void handleDeleteNote(target);
           }
         }}
       />

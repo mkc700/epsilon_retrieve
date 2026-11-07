@@ -8,17 +8,20 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useRouter } from 'expo-router';
 import { CustomModal } from '../../components/CustomModal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -87,12 +90,19 @@ export default function LoginScreen() {
   return (
     <>
       <KeyboardAvoidingView
-        style={[styles.container, { backgroundColor: colors.background }]}
+        style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
-            <Text style={[styles.title, { color: colors.primary }]}>Epsilon Retrieve</Text>
+            <View style={styles.titleBlock}>
+              <Image
+                source={isDark ? require('../../../assets/LOGO_EPSILON_N.png') : require('../../../assets/LOGO_EPSILON_B.png')}
+                style={styles.authLogo}
+                resizeMode="contain"
+              />
+              <Text style={[styles.title, { color: colors.primary }]}>Epsilon</Text>
+            </View>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Inicia sesión</Text>
 
             <View style={styles.inputContainer}>
@@ -179,11 +189,19 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
   },
+  titleBlock: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  authLogo: {
+    width: 56,
+    height: 56,
+    marginBottom: 8,
+  },
   title: {
     fontSize: 32,
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 12,
     letterSpacing: -0.5,
   },
   subtitle: {

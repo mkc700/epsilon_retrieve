@@ -2,6 +2,7 @@
   View,
   Text,
   TouchableOpacity,
+  Image,
   StyleSheet,
   Animated,
   Switch,
@@ -10,11 +11,13 @@
   useWindowDimensions,
   Platform,
 } from 'react-native';
-import type { NativeScrollEvent, NativeSyntheticEvent, ScrollViewInstance } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, ScrollViewInstance, StyleProp, ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useRouter } from 'expo-router';
+import { CustomModal } from '../../components/CustomModal';
 
 const CARD_GAP = 14;
 const MAX_SIDE_OFFSET = 150;
@@ -29,16 +32,19 @@ const SECTIONS: Array<{
   icon: string;
   route: string | null;
   tagline: string;
+  disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 }> = [
   { id: 'notes', label: 'Notas', icon: 'N', route: '/notes', tagline: 'Escribe y organiza tus ideas' },
   { id: 'agenda', label: 'Agenda', icon: 'A', route: '/agenda', tagline: 'Citas y pendientes del día' },
   { id: 'todos', label: 'Tareas', icon: 'T', route: '/todos', tagline: 'Pendientes claros, sin fricción' },
-  { id: 'pomodoros', label: 'Pomodoros', icon: 'P', route: null, tagline: 'Enfoque en bloques de 25 minutos' },
+  { id: 'pomodoros', label: 'Pomodoros', icon: 'P', route: null, tagline: 'Próximamente', disabled: true, style: { opacity: 0.5 } },
 ];
 
 export default function MenuScreen() {
   const { logout } = useAuth();
   const { colors, isDark, toggleTheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   // Tarjeta centrada siempre cabe en pantalla; las laterales se asoman sin salirse
@@ -58,6 +64,7 @@ export default function MenuScreen() {
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -110,19 +117,21 @@ export default function MenuScreen() {
   };
 
   const handleLogout = async () => {
+    setShowLogoutConfirm(false);
     await logout();
     router.replace('/login');
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border, paddingHorizontal: headerPadH }]}>
-        <Text
-          style={[styles.headerTitle, { color: colors.primary, fontSize: headerTitleSize }]}
-          numberOfLines={1}
-        >
-          Epsilon Retrieve
-        </Text>
+        <View style={styles.headerTitleContainer}>
+          <Image
+            source={isDark ? require('../../../assets/LOGO_EPSILON_N.png') : require('../../../assets/LOGO_EPSILON_B.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
+        </View>
         <View style={[styles.headerActions, { gap: headerGap }]}>
           <View style={styles.themeToggle}>
             <Switch
@@ -135,7 +144,7 @@ export default function MenuScreen() {
             />
           </View>
           <TouchableOpacity
-            onPress={handleLogout}
+            onPress={() => setShowLogoutConfirm(true)}
             style={[styles.logoutButton, { backgroundColor: colors.surfaceSecondary }]}
             accessibilityRole="button"
             accessibilityLabel={logoutLabel === 'Salir' ? 'Salir' : 'Cerrar Sesión'}
@@ -236,6 +245,7 @@ export default function MenuScreen() {
                     accessibilityState={{ selected: isActive, disabled: !isAvailable }}
                     style={[
                       styles.card,
+                      section.style,
                       {
                         backgroundColor: isActive ? colors.primary : colors.surface,
                         borderColor: isActive ? colors.primary : colors.border,
@@ -313,6 +323,18 @@ export default function MenuScreen() {
             : 'Desliza y toca la tarjeta centrada para entrar'}
         </Text>
       </View>
+
+      <CustomModal
+        visible={showLogoutConfirm}
+        title="Cerrar sesión"
+        message="¿Seguro que quieres cerrar sesión?"
+        type="error"
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        destructive
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={() => void handleLogout()}
+      />
     </View>
   );
 }
@@ -332,6 +354,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontWeight: '700',
     letterSpacing: -0.5,
+  },
+  headerTitleContainer: {
+    alignItems: 'flex-start',
+  },
+  headerLogo: {
+    width: 64,
+    height: 64,
   },
   headerActions: {
     flexDirection: 'row',

@@ -130,12 +130,12 @@ class SyncService {
     for (const action of pendingActions) {
       try {
         if (this.isLocalNoteAction(action) && !notesService.isServerId(action.data?.id)) {
-          // La reconciliación anterior debió resolver estas; como fallback, borrar localmente borrados
+          // La reconciliación anterior debió resolver estas; como fallback, limpiar ids locales
           if (action.type === 'delete_note') {
             await db.notes.delete(action.data.id);
-            await db.pendingActions.delete(action.id);
-            continue;
           }
+          await db.pendingActions.delete(action.id);
+          continue;
         }
 
         await this.processAction(action);
@@ -200,9 +200,9 @@ class SyncService {
         }
 
         const localNote = await db.notes.get(noteId);
-        if (localNote && !localNote.synced) {
-          // Encolar una creación con el estado actual de la nota local
-          await db.pendingActions.add({
+        if (localNote) {
+          // Un id local nunca existe en el servidor: encolar una creación con el estado actual
+          const pendingCreate = await db.pendingActions.add({
             type: 'create_note',
             data: {
               ...localNote,
@@ -214,6 +214,10 @@ class SyncService {
             timestamp: new Date().toISOString(),
             retryCount: 0,
           });
+          createsByNoteId.set(noteId, pendingCreate);
+          await db.pendingActions.delete(action.id);
+        } else {
+          // La nota ya no existe localmente: la actualización pendiente no aplica
           await db.pendingActions.delete(action.id);
         }
       }
@@ -221,7 +225,7 @@ class SyncService {
       if (action.type === 'delete_note') {
         // Nota local nunca subida: eliminar localmente y descartar acciones relacionadas
         await db.notes.delete(noteId);
-        const relatedActions = actions.filter(
+        const relatedActions = (await db.pendingActions.toArray()).filter(
           (candidate) => candidate.data?.id === noteId && this.isLocalNoteAction(candidate)
         );
 
@@ -271,6 +275,7 @@ class SyncService {
         );
         // Actualizar ID local con el ID del servidor
         await db.notes.delete(action.data.id);
+        await db.notes.delete(createdNote.id);
         await db.notes.add({
           ...action.data,
           id: createdNote.id,
@@ -279,6 +284,8 @@ class SyncService {
         });
         // Reasignar acciones pendientes que referenciaban el ID local
         await this.remapNoteId(action.data.id, createdNote.id);
+        // Permitir que pantallas abiertas con el id local sigan guardando
+        await notesService.registerNoteIdAlias(action.data.id, createdNote.id);
         break;
       case 'update_note':
         await notesAPI.updateNote(

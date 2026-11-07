@@ -20,6 +20,7 @@ import { CustomModal } from '../../components/CustomModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { todoApi } from '../../api/todoApi';
 import { useAuth } from '../../context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type FeedbackModal = {
   visible: boolean;
@@ -43,6 +44,7 @@ export default function TodosScreen() {
   const [todoToDelete, setTodoToDelete] = useState<TodoItem | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -59,7 +61,7 @@ export default function TodosScreen() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (newTodo: Partial<TodoItem>) => todoApi.createTodo(newTodo, token as string),
+    mutationFn: (newTodo: Partial<TodoItem>) => todoApi.createTodo({ ...newTodo, synced: false }, token as string),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       resetForm();
@@ -213,7 +215,7 @@ export default function TodosScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View
         style={[
           styles.header,
@@ -440,7 +442,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 10,
     borderBottomWidth: 1,
   },
   backButton: {
@@ -455,10 +457,10 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   addButton: {
     paddingHorizontal: 16,

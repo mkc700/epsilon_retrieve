@@ -556,6 +556,9 @@ function AgendaContent({ userId }: { userId: string }) {
                             {event.description}
                           </Text>
                         )}
+                        {!event.synced && (
+                          <Text style={[styles.syncBadge, { backgroundColor: colors.warning, color: colors.onWarning }]}>Sin sincronizar</Text>
+                        )}
                       </View>
                       <Feather name="chevron-right" size={17} color={colors.textTertiary} />
                     </TouchableOpacity>
@@ -882,6 +885,15 @@ const styles = StyleSheet.create({
   eventDescription: {
     fontSize: 12,
     lineHeight: 20,
+  },
+  syncBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 10,
+    fontWeight: '600',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   editHint: {
     fontSize: 10,

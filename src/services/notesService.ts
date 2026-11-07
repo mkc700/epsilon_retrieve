@@ -5,9 +5,43 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const createLocalId = () => `local-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
+const ID_ALIASES_KEY = 'note_id_aliases';
+
+const readIdAliases = async (): Promise<Record<string, string>> => {
+  try {
+    const raw = await AsyncStorage.getItem(ID_ALIASES_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
 class NotesService {
   isServerId(id: string): boolean {
     return /^[0-9a-fA-F]{24}$/.test(id);
+  }
+
+  // Registra el reemplazo de un id local por el id definitivo del servidor
+  async registerNoteIdAlias(oldId: string, newId: string): Promise<void> {
+    if (!oldId || !newId || oldId === newId) return;
+    const aliases = await readIdAliases();
+    aliases[oldId] = newId;
+    try {
+      await AsyncStorage.setItem(ID_ALIASES_KEY, JSON.stringify(aliases));
+    } catch (error) {
+      console.error('Error saving note id alias:', error);
+    }
+  }
+
+  // Resuelve ids locales obsoletos (pantallas abiertas durante la sincronización)
+  async resolveNoteId(id: string): Promise<string> {
+    let current = id;
+    const aliases = await readIdAliases();
+    for (let hops = 0; hops < 10 && aliases[current]; hops++) {
+      current = aliases[current];
+    }
+    return current;
   }
 
   // Obtener todas las notas
@@ -47,9 +81,10 @@ class NotesService {
 
   // Actualizar una nota existente
   async updateNote(id: string, title: string, content: string): Promise<void> {
-    const existing = await db.notes.get(id);
+    const resolvedId = await this.resolveNoteId(id);
+    const existing = await db.notes.get(resolvedId);
 
-    if (!existing) {
+    if (!existing || existing.deleted) {
       throw new Error('Nota no encontrada');
     }
 
@@ -60,19 +95,33 @@ class NotesService {
       synced: false,
     };
 
-    await db.notes.update(id, updates);
+    await db.notes.update(resolvedId, updates);
     const updatedNote = { ...existing, ...updates } as OfflineNote;
 
-    if (!existing.synced || !this.isServerId(id)) {
+    if (!this.isServerId(resolvedId)) {
       // La nota aún no existe en el servidor: actualizar la acción create_note pendiente
       await this.replacePendingCreate(updatedNote);
       return;
     }
 
-    // Agregar acción pendiente para sincronización
+    // Agregar o consolidar la acción pendiente para sincronización
+    const pendingActions = await db.pendingActions.toArray();
+    const pendingUpdate = pendingActions.find(
+      (action) => action.type === 'update_note' && action.data?.id === resolvedId
+    );
+
+    if (pendingUpdate) {
+      await db.pendingActions.update(pendingUpdate.id, {
+        data: { id: resolvedId, title: updates.title, content: updates.content, updatedAt: updates.updatedAt },
+        timestamp: new Date().toISOString(),
+        retryCount: 0,
+      });
+      return;
+    }
+
     await db.pendingActions.add({
       type: 'update_note',
-      data: { id, title: updates.title, content: updates.content, updatedAt: updates.updatedAt },
+      data: { id: resolvedId, title: updates.title, content: updates.content, updatedAt: updates.updatedAt },
       timestamp: new Date().toISOString(),
       retryCount: 0,
     });
@@ -80,20 +129,21 @@ class NotesService {
 
   // Eliminar una nota (soft delete para notas del servidor, borrado local para notas pendientes)
   async deleteNote(id: string): Promise<void> {
-    const existing = await db.notes.get(id);
+    const resolvedId = await this.resolveNoteId(id);
+    const existing = await db.notes.get(resolvedId);
 
-    if (!existing) {
+    if (!existing || existing.deleted) {
       return;
     }
 
-    if (!existing.synced || !this.isServerId(id)) {
+    if (!existing.synced || !this.isServerId(resolvedId)) {
       // Nunca llegó al servidor: borrar localmente y limpiar acciones pendientes relacionadas
-      await db.notes.delete(id);
-      await this.removeActionsForNote(id);
+      await db.notes.delete(resolvedId);
+      await this.removeActionsForNote(resolvedId);
       return;
     }
 
-    await db.notes.update(id, {
+    await db.notes.update(resolvedId, {
       deleted: true,
       synced: false,
       updatedAt: new Date().toISOString(),
@@ -102,7 +152,7 @@ class NotesService {
     // Agregar acción pendiente para sincronización
     await db.pendingActions.add({
       type: 'delete_note',
-      data: { id },
+      data: { id: resolvedId },
       timestamp: new Date().toISOString(),
       retryCount: 0,
     });

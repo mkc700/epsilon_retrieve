@@ -38,6 +38,7 @@ function apiFixture(platform, url) {
   };
   const api = loadService('api.ts', {
     axios: { create(value) { options = value; return client; } },
+    '../utils/apiUrl': { API_URL: url || 'http://localhost:5000/api' },
     '@react-native-async-storage/async-storage': { getItem: async () => 'token-of-new-account' },
     'react-native': { Platform: { OS: platform } },
   }, { process: { env: { EXPO_PUBLIC_API_URL: url } } });

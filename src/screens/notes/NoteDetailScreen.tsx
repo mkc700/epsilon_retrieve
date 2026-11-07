@@ -14,6 +14,7 @@ import { notesService } from '../../services/notesService';
 import { Note } from '../../types/index';
 import { useTheme } from '../../context/ThemeContext';
 import { CustomModal } from '../../components/CustomModal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const inputOutlineReset = Platform.OS === 'web'
   ? ({ outlineStyle: 'none' } as unknown as TextStyle)
@@ -32,6 +33,7 @@ export default function NoteDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [note, setNote] = useState<Note | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -66,7 +68,8 @@ export default function NoteDetailScreen() {
   const loadNote = async (retryCount = 0) => {
     try {
       const notes = await notesService.getNotes();
-      const foundNote = notes.find((n: Note) => n.id === id);
+      const resolvedId = await notesService.resolveNoteId(String(id));
+      const foundNote = notes.find((n: Note) => n.id === resolvedId);
       if (foundNote) {
         setNote(foundNote);
         noteRef.current = foundNote;
@@ -189,7 +192,7 @@ export default function NoteDetailScreen() {
 
   if (!note) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Cargando...</Text>
         <CustomModal
           visible={feedbackModal.visible}
@@ -205,7 +208,7 @@ export default function NoteDetailScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}
     >
       <View
         style={[
